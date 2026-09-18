@@ -1,7 +1,16 @@
 # From the ocean to the maize field
 
+<p align="center">
+  <a href="https://share.streamlit.io/deploy?repository=msovara/egs4030-drought-impact&branch=main&mainModule=app.py"><img src="https://img.shields.io/badge/Live_app-Streamlit-FF4B4B?logo=streamlit&logoColor=white" alt="Live app on Streamlit"></a>
+  <a href="LICENSE"><img src="https://img.shields.io/badge/License-Apache_2.0-blue.svg" alt="Apache 2.0"></a>
+  <img src="https://img.shields.io/badge/checks-79_passing-brightgreen" alt="79 checks passing">
+</p>
+
 A desktop-scale climate impact model for the EGS4030/5030S guest lecture on
-climate impact modelling.
+climate impact modelling, University of Cape Town, 19 October 2026.
+
+Canonical repo:
+[github.com/msovara/egs4030-drought-impact](https://github.com/msovara/egs4030-drought-impact)
 
 The package runs a complete impact chain — observed ocean state, to seasonal
 rainfall, to a daily soil water balance, to crop yield — in milliseconds per
@@ -23,6 +32,15 @@ streamlit run app.py                                     # interactive dashboard
 ```
 
 The dashboard opens at <http://localhost:8501>.
+
+### Running it without installing anything
+
+The dashboard is deployed on Streamlit Community Cloud, so students whose Python
+breaks during the practical can still take part. Use the **Live app** badge
+above, or deploy your own copy from this repo with `app.py` as the main module.
+
+Have a local fallback ready regardless. A hosted app depends on a lecture-theatre
+network, and a laptop that has already passed `check_install.py` does not.
 
 Run `check_install.py` on the lecture room machine before the session, and have
 the students run it on their own laptops at the start of the practical. It
