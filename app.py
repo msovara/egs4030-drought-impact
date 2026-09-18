@@ -63,6 +63,85 @@ st.set_page_config(
 )
 
 PHASE_COLOURS = {"positive": "#c0392b", "negative": "#2471a3", "neutral": "#909497"}
+
+# Red, amber, green stops for table shading. Interpolated by hand rather than
+# through a matplotlib colormap: pandas' background_gradient needs matplotlib,
+# which is 60 MB of dependency for two shaded columns and one more thing to go
+# wrong on a student laptop or a hosted deployment.
+_SHADE_STOPS = ((231, 76, 60), (244, 208, 63), (88, 171, 110))
+
+
+def shade_column(series, vmin=None, vmax=None, reverse=False):
+    """
+    Red-to-green background shading for one column of a Styler.
+
+    Written for `Styler.apply`, which takes a Series and returns one CSS string
+    per row. That API is stable across pandas 2.x, unlike `Styler.map`, which
+    only arrived in 2.1 and replaced a now-deprecated `applymap`.
+    """
+    values = pd.to_numeric(series, errors="coerce")
+    low = values.min() if vmin is None else vmin
+    high = values.max() if vmax is None else vmax
+    span = high - low
+
+    styles = []
+    for value in values:
+        if pd.isna(value):
+            styles.append("")
+            continue
+
+        fraction = 0.5 if span <= 0 else float(np.clip((value - low) / span, 0.0, 1.0))
+        if reverse:
+            fraction = 1.0 - fraction
+
+        # Two linear segments: red to amber below the midpoint, amber to green above.
+        if fraction <= 0.5:
+            start, end, local = _SHADE_STOPS[0], _SHADE_STOPS[1], fraction * 2.0
+        else:
+            start, end, local = _SHADE_STOPS[1], _SHADE_STOPS[2], (fraction - 0.5) * 2.0
+
+        rgb = tuple(round(a + (b - a) * local) for a, b in zip(start, end))
+        # Pale enough that the cell text stays readable at any point on the ramp.
+        styles.append(f"background-color: rgba({rgb[0]}, {rgb[1]}, {rgb[2]}, 0.45)")
+    return styles
+
+
+def show_table(frame, formats=None, shade=None, hide_index=True):
+    """
+    Render a dataframe without letting pandas Styler take the whole app down.
+
+    Styler needs jinja2, which is an optional pandas extra and is not always
+    present on a Streamlit Cloud image. Every tab in this script runs on every
+    rerun, so a missing import in Tab 1 would red-screen Tab 2. Format and
+    shade when we can; fall back to a plain table when we cannot.
+    """
+    try:
+        styler = frame.style
+        if formats:
+            styler = styler.format(formats)
+        for column, kwargs in (shade or {}).items():
+            if column in frame.columns:
+                styler = styler.apply(shade_column, subset=[column], **kwargs)
+        st.dataframe(styler, width="stretch", hide_index=hide_index)
+        return
+    except Exception:
+        pass
+
+    config = {}
+    for column, spec in (formats or {}).items():
+        if column in frame.columns:
+            config[column] = st.column_config.NumberColumn(format=_printf_format(spec))
+    st.dataframe(frame, width="stretch", hide_index=hide_index, column_config=config)
+
+
+def _printf_format(pandas_spec: str) -> str:
+    """Turn a pandas Styler format, e.g. '{:.2f}', into a printf / d3 string."""
+    inner = pandas_spec.strip()
+    if inner.startswith("{") and inner.endswith("}") and ":" in inner:
+        inner = inner[inner.index(":") + 1 : -1]
+    return f"%{inner}" if not inner.startswith("%") else inner
+
+
 STAGE_COLOURS = {
     "initial": "#a9dfbf",
     "development": "#7dcea0",
@@ -460,14 +539,13 @@ with tab_season:
             "ky": "Ky", "stage_yield_factor": "Yield multiplier",
         }
     )
-    st.dataframe(
-        display.style.format(
-            {
-                "Rain (mm)": "{:.0f}", "ETc (mm)": "{:.0f}", "ETa (mm)": "{:.0f}",
-                "Deficit": "{:.0%}", "Ky": "{:.2f}", "Yield multiplier": "{:.3f}",
-            }
-        ).background_gradient(subset=["Yield multiplier"], cmap="RdYlGn", vmin=0, vmax=1),
-        width="stretch", hide_index=True,
+    show_table(
+        display,
+        formats={
+            "Rain (mm)": "{:.0f}", "ETc (mm)": "{:.0f}", "ETa (mm)": "{:.0f}",
+            "Deficit": "{:.0%}", "Ky": "{:.2f}", "Yield multiplier": "{:.3f}",
+        },
+        shade={"Yield multiplier": dict(vmin=0.0, vmax=1.0)},
     )
 
 
@@ -643,16 +721,15 @@ with tab_record:
             "mean_spi3": "Mean SPI3", "yield_anomaly_percent": "Yield anomaly (%)",
         }
     )
-    st.dataframe(
-        composite_display.style.format(
-            {
-                "Mean yield (t/ha)": "{:.2f}", "Median (t/ha)": "{:.2f}",
-                "Std dev": "{:.2f}", "Rainfall (mm)": "{:.0f}",
-                "Stress days": "{:.1f}", "Mean SPI3": "{:.2f}",
-                "Yield anomaly (%)": "{:+.1f}",
-            }
-        ),
-        width="stretch",
+    show_table(
+        composite_display,
+        formats={
+            "Mean yield (t/ha)": "{:.2f}", "Median (t/ha)": "{:.2f}",
+            "Std dev": "{:.2f}", "Rainfall (mm)": "{:.0f}",
+            "Stress days": "{:.1f}", "Mean SPI3": "{:.2f}",
+            "Yield anomaly (%)": "{:+.1f}",
+        },
+        hide_index=False,
     )
 
     positive_yields = seasons.loc[seasons["phase"] == "positive", "actual_yield"]
@@ -695,14 +772,13 @@ with tab_record:
             "water_stress_days": "Stress days", "spi3": "SPI3",
         }
     )
-    st.dataframe(
-        worst.style.format(
-            {
-                driver.index_name: "{:.2f}", "Rain anomaly": "{:+.0%}",
-                "Rainfall (mm)": "{:.0f}", "Yield (t/ha)": "{:.2f}", "SPI3": "{:.2f}",
-            }
-        ),
-        width="stretch",
+    show_table(
+        worst,
+        formats={
+            driver.index_name: "{:.2f}", "Rain anomaly": "{:+.0%}",
+            "Rainfall (mm)": "{:.0f}", "Yield (t/ha)": "{:.2f}", "SPI3": "{:.2f}",
+        },
+        hide_index=False,
     )
     st.caption(
         f"Look for a bad season that was not a {driver.positive_label} year. Those "
@@ -831,14 +907,13 @@ with tab_ahead:
             "spi3": "SPI3",
         }
     )
-    st.dataframe(
-        analogues.style.format(
-            {
-                driver.index_name: "{:.2f}", "Rainfall (mm)": "{:.0f}",
-                "Modelled yield (t/ha)": "{:.2f}", "SPI3": "{:.2f}",
-            }
-        ),
-        width="stretch",
+    show_table(
+        analogues,
+        formats={
+            driver.index_name: "{:.2f}", "Rainfall (mm)": "{:.0f}",
+            "Modelled yield (t/ha)": "{:.2f}", "SPI3": "{:.2f}",
+        },
+        hide_index=False,
     )
     st.info(
         "The seasons in this table are real and their index values are observed, "
@@ -960,14 +1035,13 @@ with tab_index:
                 "rank_disagreement": "Disagreement",
             }
         )
-        st.dataframe(
-            biggest.style.format(
-                {
-                    "SPI3": "{:.2f}", "SPI rank": "{:.0f}", "Yield (t/ha)": "{:.2f}",
-                    "Yield rank": "{:.0f}", "Disagreement": "{:.0f}",
-                }
-            ),
-            width="stretch",
+        show_table(
+            biggest,
+            formats={
+                "SPI3": "{:.2f}", "SPI rank": "{:.0f}", "Yield (t/ha)": "{:.2f}",
+                "Yield rank": "{:.0f}", "Disagreement": "{:.0f}",
+            },
+            hide_index=False,
         )
 
 
@@ -988,17 +1062,16 @@ with tab_driver:
 
     st.markdown("#### What the weather model actually achieves")
     skill_frame = pd.DataFrame(summary_rows())
-    st.dataframe(
-        skill_frame.style.format(
-            {
-                "RMSE (degC)": "{:.3f}",
-                "Bias (degC)": "{:+.3f}",
-                "ACC": "{:.3f}",
-                "Persistence RMSE (degC)": "{:.3f}",
-                "Skill vs persistence": "{:+.1%}",
-            }
-        ).background_gradient(subset=["RMSE (degC)"], cmap="RdYlGn_r"),
-        width="stretch", hide_index=True,
+    show_table(
+        skill_frame,
+        formats={
+            "RMSE (degC)": "{:.3f}",
+            "Bias (degC)": "{:+.3f}",
+            "ACC": "{:.3f}",
+            "Persistence RMSE (degC)": "{:.3f}",
+            "Skill vs persistence": "{:+.1%}",
+        },
+        shade={"RMSE (degC)": dict(reverse=True)},
     )
     st.caption(
         f"{PROVENANCE['model']}. {PROVENANCE['sample']}. {PROVENANCE['protocol']} "
@@ -1298,11 +1371,12 @@ with tab_model:
 
     st.divider()
     st.error(
-        "**The honest caveat, which belongs in the lecture.** The Dipole Mode Index "
-        "is observed. The crop model is standard and defensible. The weak link is "
-        "the step between them: the assumed sensitivity of local rainfall to the "
-        "IOD is an illustrative default, not a fitted result. Replacing it with a "
-        "regression against observed station or reanalysis rainfall is the first "
-        "thing anyone should do before treating any of these numbers as a finding.",
+        f"**The honest caveat, which belongs in the lecture.** The "
+        f"{driver.index_name} is observed. The crop model is standard and "
+        f"defensible. The weak link is the step between them: the assumed "
+        f"sensitivity of local rainfall to {driver.name} is an illustrative "
+        f"default, not a fitted result. Replacing it with a regression against "
+        f"observed station or reanalysis rainfall is the first thing anyone "
+        f"should do before treating any of these numbers as a finding.",
         icon=":material/warning:",
     )

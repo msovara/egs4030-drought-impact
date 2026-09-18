@@ -12,6 +12,11 @@ scipy>=1.10,<2
 streamlit>=1.30
 plotly>=5.18
 
+# pandas Styler (used for formatted / shaded tables) needs jinja2. It is an
+# optional extra, so a Cloud image that only installs this file otherwise
+# red-screens the whole dashboard on first load.
+jinja2>=3.1
+
 # Optional: only needed for the observed-reanalysis extension in the student task,
 # where SPI is recomputed from ERA5 rather than from the weather generator.
 # xarray>=2023.6
