@@ -1,0 +1,14 @@
+# Streamlit Community Cloud reads this on deploy. Kept minimal on purpose: the
+# defaults are fine, and a lecture demonstration should not depend on styling.
+
+[theme]
+base = "light"
+primaryColor = "#c0392b"
+
+[server]
+# The dashboard holds no user data and writes nothing, so usage stats are off
+# rather than because anything here is sensitive.
+enableStaticServing = false
+
+[browser]
+gatherUsageStats = false
