@@ -1,7 +1,7 @@
 # From the ocean to the maize field
 
 <p align="center">
-  <a href="https://share.streamlit.io/deploy?repository=msovara/egs4030-drought-impact&branch=main&mainModule=app.py"><img src="https://img.shields.io/badge/Live_app-Streamlit-FF4B4B?logo=streamlit&logoColor=white" alt="Live app on Streamlit"></a>
+  <a href="https://msovara-egs4030-drought-impact-app-ylw3zh.streamlit.app/"><img src="https://img.shields.io/badge/Live_app-Streamlit-FF4B4B?logo=streamlit&logoColor=white" alt="Live app on Streamlit"></a>
   <a href="LICENSE"><img src="https://img.shields.io/badge/License-Apache_2.0-blue.svg" alt="Apache 2.0"></a>
   <img src="https://img.shields.io/badge/checks-79_passing-brightgreen" alt="79 checks passing">
 </p>
@@ -35,9 +35,11 @@ The dashboard opens at <http://localhost:8501>.
 
 ### Running it without installing anything
 
-The dashboard is deployed on Streamlit Community Cloud, so students whose Python
-breaks during the practical can still take part. Use the **Live app** badge
-above, or deploy your own copy from this repo with `app.py` as the main module.
+The dashboard is hosted at
+<https://msovara-egs4030-drought-impact-app-ylw3zh.streamlit.app/>,
+so students whose Python breaks during the practical can still take part.
+Use the **Live app** badge above. You can also deploy your own copy from this
+repo with `app.py` as the main module.
 
 Have a local fallback ready regardless. A hosted app depends on a lecture-theatre
 network, and a laptop that has already passed `check_install.py` does not.

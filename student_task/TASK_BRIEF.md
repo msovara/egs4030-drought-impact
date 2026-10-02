@@ -44,6 +44,9 @@ python scripts/run_demo.py --site limpopo --scenario 2.4
 streamlit run app.py
 ```
 
+If Python will not install, the dashboard is also hosted at
+<https://msovara-egs4030-drought-impact-app-ylw3zh.streamlit.app/>.
+
 ---
 
 ## Core tasks
