@@ -51,27 +51,32 @@ NINO34_FILENAME = "nino34_monthly.csv"
 # What NOAA CPC said about the season this lecture falls in.
 # ---------------------------------------------------------------------------
 
-# Recorded from the CPC ENSO Diagnostic Discussion of 10 September 2026 so that
+# Recorded from the CPC ENSO Diagnostic Discussion of 8 October 2026 so that
 # the dashboard can cite a source rather than a number someone typed in. Update
-# the figures, and the date, if you re-run this in a later season.
+# the figures, and the date, if you re-run this in a later season. The next
+# discussion is scheduled for 12 November 2026.
 CPC_ADVISORY = {
-    "issued": "10 September 2026",
+    "issued": "8 October 2026",
     "status": "El Nino Advisory",
-    "latest_month": "August 2026",
-    "nino34_anomaly": 1.8,
-    "nino3_anomaly": 2.5,
-    "nino12_anomaly": 3.4,
-    "very_strong_probability": 0.90,
-    "historic_probability_ond": 0.75,
-    "roni_forecast_ond_median": 2.66,
+    "latest_month": "September 2026",
+    "nino34_anomaly": 2.1,
+    "nino3_anomaly": 3.0,
+    "nino12_anomaly": 3.9,
+    "eastern_pacific_anomaly": 4.0,
+    "very_strong_probability": 0.83,
+    "historic_probability_son": 0.54,
+    "historic_probability_ond": 0.83,
+    "historic_probability_ndj": 0.70,
+    "roni_forecast_ond_median": 2.74,
+    "roni_outlook": "https://www.cpc.ncep.noaa.gov/products/analysis_monitoring/enso/roni/outlook/",
     "url": (
         "https://www.cpc.ncep.noaa.gov/products/analysis_monitoring/"
         "enso_advisory/ensodisc.shtml"
     ),
     "summary": (
-        "El Nino is strengthening, with a greater than 90% chance of a very "
-        "strong event during late 2026, and a 75% chance that October-December "
-        "exceeds any event since 1950."
+        "El Nino continues to strengthen, with a strong-to-very strong event "
+        "likely through January-March 2027 (greater than an 83% chance), and "
+        "an 83% chance that October-December exceeds any event since 1950."
     ),
 }
 

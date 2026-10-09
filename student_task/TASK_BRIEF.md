@@ -9,10 +9,11 @@ modified code
 
 ## The situation
 
-You work for a provincial department of agriculture. It is September 2026. NOAA's
-Climate Prediction Center has just issued an El Niño Advisory: Niño 3.4 reached
-+1.8 °C in August, and there is a 75% chance that October–December will exceed
-any event since 1950. Planting begins in about eight weeks. Your director asks a
+You work for a provincial department of agriculture. It is mid-October 2026.
+NOAA's Climate Prediction Center has the ENSO alert system at El Niño Advisory.
+As of its 8 October discussion, Niño 3.4 had reached +2.1 °C in September, with
+an 83% chance that October–December would exceed any event since 1950. Planting
+in the summer-rainfall zone is four to six weeks away. Your director asks a
 simple question:
 
 > *Should we be warning maize farmers, and if so, which ones?*
@@ -40,7 +41,7 @@ Everything runs on a laptop in seconds. Start with:
 ```bash
 python scripts/check_install.py
 python scripts/run_demo.py --site limpopo --observed
-python scripts/run_demo.py --site limpopo --scenario 2.4
+python scripts/run_demo.py --site limpopo --scenario 2.5
 streamlit run app.py
 ```
 
@@ -100,10 +101,10 @@ Restrict both to the years they have in common, then answer:
   this with a correlation and a significance test, not an impression.
 - The two indices are correlated at about r = 0.61. What does that do to your
   ability to attribute a bad season to one of them rather than the other?
-- ENSO peaks in DJF, during the growing season. The IOD peaks in SON, before
-  planting. Which property matters more to a department that has to issue a
-  warning in September, and why is that not the same question as which index
-  correlates better?
+- ENSO peaks in DJF, during the growing season. The IOD peaks in SON, which is
+  now. Which property matters more to a department that has to issue a warning
+  in October, and why is that not the same question as which index correlates
+  better?
 
 Then run the forward scenario at the value CPC is forecasting, and report the
 resulting distribution of harvests rather than its mean alone. State the

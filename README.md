@@ -3,7 +3,7 @@
 <p align="center">
   <a href="https://msovara-egs4030-drought-impact-app-ylw3zh.streamlit.app/"><img src="https://img.shields.io/badge/Live_app-Streamlit-FF4B4B?logo=streamlit&logoColor=white" alt="Live app on Streamlit"></a>
   <a href="LICENSE"><img src="https://img.shields.io/badge/License-Apache_2.0-blue.svg" alt="Apache 2.0"></a>
-  <img src="https://img.shields.io/badge/checks-79_passing-brightgreen" alt="79 checks passing">
+  <img src="https://img.shields.io/badge/checks-82_passing-brightgreen" alt="82 checks passing">
 </p>
 
 A desktop-scale climate impact model for the EGS4030/5030S guest lecture on
@@ -25,9 +25,9 @@ they can do with the coupled models they meet in the rest of the module.
 ```bash
 pip install -r requirements.txt
 
-python scripts/check_install.py                          # 71 checks, ~12 seconds
+python scripts/check_install.py                          # 82 checks, ~12 seconds
 python scripts/run_demo.py --site limpopo --observed     # text output
-python scripts/run_demo.py --site limpopo --scenario 2.4 # the season ahead
+python scripts/run_demo.py --site limpopo --scenario 2.5 # the season ahead
 streamlit run app.py                                     # interactive dashboard
 ```
 
@@ -85,11 +85,12 @@ prediction can and cannot do.
 
 ### The 2026/27 season
 
-The lecture falls inside a developing El Niño. NOAA CPC's advisory of 10
-September 2026 had Niño 3.4 at +1.8 °C with a 75% chance that October–December
-would exceed any event since 1950. The three closest analogues in the observed
-record — 1982/83, 1997/98 and 2015/16 — are the seasons of the best-documented
-southern African crop failures.
+The lecture falls inside a developing El Niño. NOAA CPC's advisory of 8
+October 2026 had Niño 3.4 at +2.1 °C, with a strong-to-very strong event likely
+through January–March 2027 and an 83% chance that October–December exceeds any
+event since 1950. The three closest analogues in the observed record — 1982/83,
+1997/98 and 2015/16 — are the seasons of the best-documented southern African
+crop failures.
 
 Tab 4 runs the model forward on that. The advisory figures are recorded in
 `climate.CPC_ADVISORY` with their source, so they can be cited rather than

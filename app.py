@@ -808,13 +808,15 @@ with tab_ahead:
             f"([source]({CPC_ADVISORY['url']}))"
         )
         st.caption(
-            f"The bundled observations end in {latest['label']} at "
-            f"{latest['value']:+.2f} degC. RONI and the raw Nino 3.4 anomaly are "
-            "not the same quantity: RONI subtracts the tropical mean sea surface "
-            "temperature, so it is the smaller number in a warming ocean. Treat "
-            "the slider below as a scenario, not as a forecast I am issuing."
+            f"The bundled monthly file ends in {latest['label']} at "
+            f"{latest['value']:+.2f} degC; CPC's discussion is ahead of that "
+            "file. RONI and the raw Nino 3.4 anomaly are not the same quantity: "
+            "RONI subtracts the tropical mean sea surface temperature, so it is "
+            "the smaller number in a warming ocean. Treat the slider below as a "
+            "scenario, not as a forecast I am issuing. The default of +2.5 degC "
+            "is the historic-event threshold CPC is now giving an 83% chance."
         )
-        default_scenario = 2.4
+        default_scenario = 2.5
     else:
         st.markdown(
             "Set a dipole state and run the impact model forward on it. The same "

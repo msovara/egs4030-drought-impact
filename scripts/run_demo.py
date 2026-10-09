@@ -10,7 +10,7 @@ a useful impact model does not have to be a supercomputer job.
     python scripts/run_demo.py --site free_state --anomaly -0.4
     python scripts/run_demo.py --site limpopo --observed
     python scripts/run_demo.py --site limpopo --observed --driver iod
-    python scripts/run_demo.py --site limpopo --scenario 2.4
+    python scripts/run_demo.py --site limpopo --scenario 2.5
 """
 
 import argparse
@@ -208,7 +208,7 @@ def main() -> None:
     parser.add_argument("--seed", type=int, default=2026, help="Random seed for the weather generator")
     parser.add_argument("--driver", default="enso", choices=sorted(DRIVERS), help="Climate driver: enso (Nino 3.4, DJF) or iod (DMI, SON)")
     parser.add_argument("--observed", action="store_true", help="Also run the full observed index record")
-    parser.add_argument("--scenario", type=float, default=None, metavar="VALUE", help="Run a forward scenario at this index value, e.g. 2.4 for a very strong El Nino")
+    parser.add_argument("--scenario", type=float, default=None, metavar="VALUE", help="Run a forward scenario at this index value, e.g. 2.5 for a historic-strength El Nino")
     parser.add_argument("--no-sensitivity", action="store_true", help="Skip the rainfall sensitivity sweep")
     args = parser.parse_args()
 

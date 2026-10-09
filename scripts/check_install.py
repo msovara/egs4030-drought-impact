@@ -20,6 +20,7 @@ sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
 import numpy as np
 
 from impact_model.climate import (
+    CPC_ADVISORY,
     DRIVERS,
     TeleconnectionAssumption,
     aligned_indices,
@@ -100,6 +101,23 @@ try:
     print(f"  ok    the two indices overlap over {len(overlap)} seasons, r = {correlation:.2f}")
 except Exception:
     failures.append("Could not align the two index records")
+    traceback.print_exc()
+
+section("Current El Nino advisory (the live event)")
+try:
+    check(CPC_ADVISORY["nino34_anomaly"] >= 1.5,
+          "CPC Nino 3.4 in the advisory should still be a strong El Nino")
+    check(CPC_ADVISORY["historic_probability_ond"] >= 0.5,
+          "The October-December historic-event probability should be at least even odds")
+    check("October" in CPC_ADVISORY["issued"] or "November" in CPC_ADVISORY["issued"],
+          "The cited CPC discussion should be the October or November 2026 issue")
+    print(
+        f"  ok    CPC {CPC_ADVISORY['issued']}: Nino 3.4 "
+        f"{CPC_ADVISORY['nino34_anomaly']:+.1f} degC, historic OND "
+        f"{CPC_ADVISORY['historic_probability_ond']:.0%}"
+    )
+except Exception:
+    failures.append("CPC advisory check raised an exception")
     traceback.print_exc()
 
 section("Single seasons: every site with its default crop")
