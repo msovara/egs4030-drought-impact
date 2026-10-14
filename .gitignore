@@ -17,3 +17,7 @@ figures/
 *.png
 *.pdf
 !student_task/*.pdf
+
+# Raw ERA5 downloads; only the processed files in data/ are committed.
+data/raw/
+*.part

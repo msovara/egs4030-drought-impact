@@ -1,88 +1,69 @@
 # -*- coding: utf-8 -*-
 """
-A desktop-scale crop water-balance impact model for EGS4030/5030S.
+A small crop water-balance impact model for the EGS4030/5030S practical:
+maize in the Mopani district of Limpopo, and its link to ENSO.
 
-The package is arranged to follow the impact modelling chain, one module per link:
+The modules follow the impact modelling chain, one link each:
 
-    climate.py     observed ENSO or IOD state, and its assumed link to rainfall
-    weather.py     daily rainfall and temperature, and reference evapotranspiration
+    data.py        reading the ERA5 rainfall, temperature and SST files
+    climate.py     the relative Nino 3.4 index, Mopani rainfall, and the fitted
+                   relationship between them
+    weather.py     reference evapotranspiration, and rescaling a season's rain
     crop.py        the impact model: soil water balance and yield response
-    indices.py     SPI and SPEI, for comparison against the modelled impact
-    experiment.py  multi-season runs and compositing by climate phase
-    config.py      site, soil and crop parameters
-
-The climate driver is selectable. `enso` uses the DJF Nino 3.4 index and is the
-default; `iod` uses the SON Dipole Mode Index. Everything downstream is the same
-either way, which is the point of keeping the driver in its own module.
+    experiment.py  historical runs, the same-rainfall experiment, and the
+                   uncertainty cascade for the season ahead
+    indices.py     SPI and SPEI, for comparison with the modelled impact
+    config.py      the study area, period, soils and crop
 """
 
 from .climate import (
-    CPC_ADVISORY,
-    DEFAULT_DRIVER,
-    DRIVERS,
-    ClimateDriver,
-    TeleconnectionAssumption,
-    aligned_indices,
-    fit_sensitivity,
-    get_driver,
-    latest_observation,
-    load_dmi,
-    load_index,
-    load_nino34,
+    C3S_FORECAST,
+    TeleconnectionFit,
+    fit_teleconnection,
+    forecast_djf_range,
+    load_enso_index,
+    monthly_enso_indices,
+    rainy_season_totals,
+    seasonal_record,
 )
-from .config import CROPS, SITES, SOILS
+from .config import MAIZE, PLANTING_DATES, SOILS, STAGE_LABELS, STAGE_ORDER, STUDY_AREA
 from .crop import SeasonResult, run_season
+from .data import MissingDataError, load_daily_weather, load_monthly_sst
 from .experiment import (
-    ScenarioResult,
-    analogue_seasons,
-    composite_by_phase,
-    diurnal_range_sweep,
-    run_observed_record,
-    run_scenario,
-    run_single_season,
-    sensitivity_sweep,
-    temperature_bias_sweep,
+    CASCADE_STAGES,
+    CascadeResult,
+    run_cascade,
+    run_historical,
+    run_one_season,
+    same_total_experiment,
 )
-from .indices import (
-    classify_drought,
-    standardized_precipitation_evapotranspiration_index,
-    standardized_precipitation_index,
-)
-from .weather import WeatherGeneratorParams, generate_weather, reference_et_hargreaves
 
-__version__ = "0.1.0"
+__version__ = "0.2.0"
 
 __all__ = [
-    "CPC_ADVISORY",
-    "CROPS",
-    "DEFAULT_DRIVER",
-    "DRIVERS",
-    "SITES",
+    "C3S_FORECAST",
+    "CASCADE_STAGES",
+    "CascadeResult",
+    "MAIZE",
+    "MissingDataError",
+    "PLANTING_DATES",
     "SOILS",
-    "ClimateDriver",
-    "ScenarioResult",
+    "STAGE_LABELS",
+    "STAGE_ORDER",
+    "STUDY_AREA",
     "SeasonResult",
-    "TeleconnectionAssumption",
-    "WeatherGeneratorParams",
-    "aligned_indices",
-    "analogue_seasons",
-    "classify_drought",
-    "composite_by_phase",
-    "diurnal_range_sweep",
-    "fit_sensitivity",
-    "generate_weather",
-    "get_driver",
-    "latest_observation",
-    "load_dmi",
-    "load_index",
-    "load_nino34",
-    "reference_et_hargreaves",
-    "run_observed_record",
-    "run_scenario",
+    "TeleconnectionFit",
+    "fit_teleconnection",
+    "forecast_djf_range",
+    "load_daily_weather",
+    "load_enso_index",
+    "load_monthly_sst",
+    "monthly_enso_indices",
+    "rainy_season_totals",
+    "run_cascade",
+    "run_historical",
+    "run_one_season",
     "run_season",
-    "run_single_season",
-    "sensitivity_sweep",
-    "standardized_precipitation_evapotranspiration_index",
-    "standardized_precipitation_index",
-    "temperature_bias_sweep",
+    "same_total_experiment",
+    "seasonal_record",
 ]

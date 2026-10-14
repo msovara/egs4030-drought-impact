@@ -1,68 +1,65 @@
-# Data bundled with this package
+# Data used by the model
 
-## `nino34_monthly.csv`
+Both files are produced by `scripts/prepare_era5_data.py` from ERA5 (Hersbach
+et al., 2020), made available by the Copernicus Climate Change Service. They are
+small enough to keep in the repository, so students need no Copernicus account.
 
-Monthly Niño 3.4 sea surface temperature and anomaly, January 1950 to the
-present, from NOAA's Climate Prediction Center ERSSTv5 index file.
+## `era5_mopani_daily.nc`
 
-| Column | Meaning |
-|---|---|
-| `year`, `month` | Calendar month |
-| `nino34` | Absolute SST over the Niño 3.4 box, °C |
-| `nino34_anom` | Anomaly against the 1991–2020 base period, °C |
+Daily weather averaged over the study area, from 1979.
 
-The model averages this to a DJF seasonal mean, labelled by the year the
-December falls in, so the 2015 season means December 2015 to February 2016.
+| Variable | Units | Meaning |
+|---|---|---|
+| `precip` | mm/day | Total precipitation |
+| `t_max` | °C | Highest hourly 2 m temperature of the day |
+| `t_min` | °C | Lowest hourly 2 m temperature of the day |
 
-Niño 3.4 is the SST anomaly averaged over 170–120°W, 5°S–5°N. Note the base
-period: the anomalies are published against 1991–2020, so over a record starting
-in 1950 they carry a cold offset of roughly −0.12 °C. `load_index` corrects for
-this by default; see the `baseline` argument.
+Days are South African Standard Time (UTC+2) calendar days. ERA5 hourly
+precipitation is the total over the hour ending at the time stamp, so each hour
+is assigned to the local day in which it starts. Because the daily extremes are
+taken from hourly values, the true maximum and minimum are slightly
+underestimated.
 
-To refresh it:
+**Study area.** 23.0–24.0°S, 30.5–31.0°E (5 × 3 ERA5 grid points), set in
+`impact_model/config.py` as `STUDY_AREA`. It covers the dryland maize areas of
+the Mopani lowveld around Giyani and Letsitele, east of the escarpment and west
+of the Kruger National Park. The escarpment is left out on purpose: rainfall
+there is much higher, and ERA5's 0.25° grid cannot resolve the gradient, so
+including it would mix two quite different climates. If you change the box,
+rerun both steps of the preparation script.
+
+## `era5_sst_monthly.nc`
+
+Monthly mean sea surface temperature, ocean points only, weighted by the cosine
+of latitude.
+
+| Variable | Units | Meaning |
+|---|---|---|
+| `nino34_sst` | °C | Mean over 5°S–5°N, 170°W–120°W |
+| `tropical_sst` | °C | Mean over all ocean points in 20°S–20°N |
+
+The relative Niño 3.4 index is calculated from these in
+`impact_model/climate.py`, following the C3S definition:
+
+1. Each series is expressed as an anomaly from its 1993–2016 monthly
+   climatology (the C3S hindcast period).
+2. The tropical anomaly is subtracted from the Niño 3.4 anomaly.
+3. The difference is multiplied by a scaling factor for each calendar month:
+   the standard deviation of the Niño 3.4 anomaly divided by the standard
+   deviation of the difference, both over 1991–2020. This gives the relative
+   index the same year-to-year variability as the traditional index.
+
+## Recreating the files
+
+Needs a Copernicus CDS account with the ERA5 licence accepted, and an API key in
+`~/.cdsapirc` (see <https://cds.climate.copernicus.eu/how-to-api>).
 
 ```bash
-python - <<'PY'
-import io, urllib.request, pandas as pd
-url = "https://www.cpc.ncep.noaa.gov/data/indices/ersst5.nino.mth.91-20.ascii"
-txt = urllib.request.urlopen(url, timeout=60).read().decode()
-df = pd.read_csv(io.StringIO(txt), sep=r"\s+")
-df.columns = ["year", "month", "nino12", "nino12_anom", "nino3", "nino3_anom",
-              "nino4", "nino4_anom", "nino34", "nino34_anom"]
-df[["year", "month", "nino34", "nino34_anom"]].to_csv("nino34_monthly.csv", index=False)
-PY
+conda activate impact
+python scripts/prepare_era5_data.py download    # resumable; CDS queues vary
+python scripts/prepare_era5_data.py process
+python scripts/check_install.py
 ```
 
-If you refresh it, also update `CPC_ADVISORY` in `impact_model/climate.py`, which
-records the diagnostic discussion the dashboard cites.
-
-## `dmi_son_annual_averages.csv`
-
-September–November mean Dipole Mode Index, 1980–2020, from three independent
-observational sea surface temperature products.
-
-| Column | Meaning |
-|---|---|
-| `Year` | Calendar year of the SON season |
-| `DMI_HadISST_SON` | DMI from HadISST |
-| `DMI_ERSST_SON` | DMI from NOAA ERSST |
-| `DMI_ERA5_SON` | DMI from ERA5 |
-
-The model uses the ERA5 column by default, falling back to HadISST then ERSST if
-it is absent. See `impact_model/climate.py`.
-
-The Dipole Mode Index is the difference in SST anomaly between the western
-equatorial Indian Ocean (50–70°E, 10°S–10°N) and the south-eastern equatorial
-Indian Ocean (90–110°E, 10°S–0°N), after Saji et al. (1999).
-
-## `dmi_son_top_events.csv`
-
-The strongest SON dipole events in the record, used for cross-checking the phase
-classification.
-
----
-
-These files are copied from the parent research repository so that this teaching
-package is self-contained and can be zipped, shared or deployed on its own. They
-are observations, not model output: everything downstream of them in this
-package is modelled.
+The raw downloads (about 0.5 GB) go to `data/raw/`, which git ignores. Only the
+two processed files need to be committed.

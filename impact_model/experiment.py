@@ -1,618 +1,453 @@
 # -*- coding: utf-8 -*-
 """
-Multi-season experiments: the full chain from an observed ocean index to crop yield.
+Experiments: running the crop model on the historical record and on the
+season ahead.
 
-This is the module that makes the lecture's argument. It builds one continuous
-daily climate record for the whole observed period, applies the index-driven
-rainfall anomaly season by season, runs the impact model for each growing season,
-and composites the resulting yields by climate phase.
+    run_one_season           one historical season in full daily detail
+    run_historical           every season since 1979 with its ERA5 weather
+    same_total_experiment    every historical rainfall sequence scaled to the
+                             same seasonal total, to separate timing from amount
+    run_cascade              the season ahead, adding one source of uncertainty
+                             at a time
 
-The driver is a parameter, not a hard-wired choice. Running the same impact model
-from ENSO and from the IOD, and asking which one predicts the harvest better, is
-a more interesting question than either index on its own.
-
-Building a single continuous record matters for more than tidiness. SPI and SPEI
-are defined by fitting a distribution to each calendar month across many years,
-so they can only be computed on a long record. Running each season in isolation
-would make the drought indices meaningless.
+Seasons are labelled by planting year: the 2015 season is planted in November
+2015 and harvested in 2016.
 """
 
-from dataclasses import dataclass
+from dataclasses import dataclass, field
+from functools import lru_cache
 from typing import Dict, List, Optional, Tuple
 
 import numpy as np
 import pandas as pd
 
 from .climate import (
-    DEFAULT_DRIVER,
-    ClimateDriver,
-    TeleconnectionAssumption,
-    get_driver,
-    load_index,
-    rainfall_anomaly_from_index,
+    TeleconnectionFit,
+    fit_teleconnection,
+    load_enso_index,
+    rainy_season_label,
+    rainy_season_totals,
 )
-from .config import CROPS, SITES, SOILS, Crop, Site
-from .crop import SeasonResult, run_season
-from .indices import (
-    standardized_precipitation_evapotranspiration_index,
-    standardized_precipitation_index,
+from .config import (
+    CASCADE_FLOWERING_KY,
+    CASCADE_SOILS,
+    DEFAULT_PLANTING,
+    DEFAULT_SOIL,
+    EL_NINO_THRESHOLD,
+    FIRST_SEASON,
+    LA_NINA_THRESHOLD,
+    MAIZE,
+    PLANTING_DATES,
+    RAINY_SEASON_MONTHS,
+    SOILS,
+    Crop,
 )
-from .weather import WeatherGeneratorParams, generate_weather
+from .crop import SeasonResult, relative_yield_from_arrays, run_season
+from .data import load_daily_weather
+from .indices import standardized_precipitation_index
+from .weather import scale_rainy_season
 
-# The water balance needs some spin-up before planting so the season does not
-# start from an arbitrary soil moisture state.
+# The soil water balance starts this many days before planting, so that each
+# season begins from a soil moisture state set by its own preceding weather.
 SPINUP_DAYS = 120
 
-
-@dataclass
-class ObservedRun:
-    """Everything a multi-year run produces, kept together for the dashboard."""
-
-    seasons: pd.DataFrame          # one row per growing season
-    weather: pd.DataFrame          # the continuous daily climate record
-    monthly: pd.DataFrame          # monthly totals with SPI and SPEI attached
-    site: Site
-    crop: Crop
-    assumption: TeleconnectionAssumption
-    driver: ClimateDriver          # which ocean index drove the run
-
-
-def _planting_date(site: Site, year: int) -> pd.Timestamp:
-    """
-    Planting date for the season attributed to `year`.
-
-    Summer-rainfall sites plant late in the calendar year and harvest in the next,
-    so the season labelled 1997 is planted in November 1997. Winter-rainfall sites
-    plant and harvest within the same calendar year.
-    """
-    return pd.Timestamp(year=year, month=1, day=1) + pd.Timedelta(
-        days=site.planting_day_of_year - 1
-    )
-
-
-def _season_year(dates: pd.DatetimeIndex, planting_day_of_year: int) -> np.ndarray:
-    """
-    Label each date with the growing season it belongs to.
-
-    A season runs from its planting date to the day before the next planting date,
-    so for a November-planted crop the whole of January to October belongs to the
-    season that was planted in the previous calendar year.
-    """
-    return np.where(
-        dates.dayofyear.to_numpy() >= planting_day_of_year,
-        dates.year.to_numpy(),
-        dates.year.to_numpy() - 1,
-    )
-
-
-# Planting follows the onset of the rains rather than a fixed date, so the profile
-# is never bone dry at sowing. Capping the initial deficit below the depletion
-# fraction stops every run from showing spurious establishment stress.
+# Planting follows the first good rains, so the profile is never bone dry at
+# sowing. Capping the initial deficit stops every dry start showing spurious
+# establishment stress.
 MAX_INITIAL_DEPLETION_FRACTION = 0.50
 
+# A day with less rain than this counts as dry when measuring dry spells.
+DRY_DAY_MM = 1.0
 
-def _initial_depletion(spinup: pd.DataFrame, capacity_mm: float) -> float:
-    """
-    Estimate the pre-planting soil water deficit from the spin-up period.
 
-    A crude bucket is enough here: the point is only to avoid starting every
-    season from the same arbitrary moisture state, which would otherwise wash out
-    the effect of a dry antecedent period.
+# ---------------------------------------------------------------------------
+# Small helpers
+# ---------------------------------------------------------------------------
+
+def planting_date(season: int, planting: str = DEFAULT_PLANTING) -> pd.Timestamp:
+    month, day = PLANTING_DATES[planting]
+    return pd.Timestamp(year=season, month=month, day=day)
+
+
+def _initial_depletion(spinup_precip: np.ndarray, spinup_et0: np.ndarray, capacity_mm: float) -> float:
     """
-    balance = float((spinup["precip"] - 0.35 * spinup["et0"]).sum())
+    A rough estimate of how dry the root zone is at planting.
+
+    A simple running balance over the spin-up period is enough: the aim is only
+    that a dry spring leaves the soil drier at planting than a wet one.
+    """
+    balance = float(np.sum(spinup_precip) - 0.35 * np.sum(spinup_et0))
     deficit = 0.85 - balance / max(capacity_mm * 3.0, 1e-6)
     return float(np.clip(deficit, 0.05, MAX_INITIAL_DEPLETION_FRACTION))
 
 
-def run_single_season(
-    site: Site,
-    crop: Crop,
-    rainfall_anomaly: float,
-    year: int = 2000,
-    temperature_shift: float = 0.0,
-    irrigation_mm_per_week: float = 0.0,
-    seed: Optional[int] = None,
-    diurnal_range_shift: float = 0.0,
+def longest_dry_spell(precip: np.ndarray, threshold: float = DRY_DAY_MM) -> int:
+    """The longest run of consecutive days with less than `threshold` mm."""
+    longest = current = 0
+    for value in precip:
+        current = current + 1 if value < threshold else 0
+        longest = max(longest, current)
+    return longest
+
+
+def _soil_and_crop(soil_key: str, crop: Optional[Crop]) -> Tuple:
+    return SOILS[soil_key], (crop or MAIZE)
+
+
+@lru_cache(maxsize=8)
+def available_seasons(planting: str = DEFAULT_PLANTING, season_days: int = MAIZE.season_length) -> Tuple[int, ...]:
+    """Seasons with complete weather from spin-up to harvest, from 1979 onwards."""
+    weather = load_daily_weather()
+    totals = rainy_season_totals()
+    seasons = []
+    for season in totals.index:
+        start = planting_date(season, planting) - pd.Timedelta(days=SPINUP_DAYS)
+        end = planting_date(season, planting) + pd.Timedelta(days=season_days - 1)
+        if season >= FIRST_SEASON and start >= weather.index[0] and end <= weather.index[-1]:
+            seasons.append(int(season))
+    return tuple(seasons)
+
+
+# ---------------------------------------------------------------------------
+# One season, in detail
+# ---------------------------------------------------------------------------
+
+def season_weather(
+    season: int,
+    planting: str = DEFAULT_PLANTING,
+    rain_factor: float = 1.0,
+    season_days: int = MAIZE.season_length,
+) -> Tuple[pd.DataFrame, pd.DataFrame]:
+    """
+    The ERA5 weather for one season: the spin-up period and the growing season.
+
+    `rain_factor` scales the rainfall of that season's rainy months (see
+    `weather.scale_rainy_season`); 1 leaves it as observed.
+    """
+    weather = load_daily_weather()
+    plant = planting_date(season, planting)
+    window = weather.loc[plant - pd.Timedelta(days=SPINUP_DAYS): plant + pd.Timedelta(days=season_days + 30)]
+    window = scale_rainy_season(window, rain_factor, season, RAINY_SEASON_MONTHS)
+    spinup = window.loc[: plant - pd.Timedelta(days=1)]
+    growing = window.loc[plant:]
+    return spinup, growing
+
+
+def run_one_season(
+    season: int,
+    soil_key: str = DEFAULT_SOIL,
+    planting: str = DEFAULT_PLANTING,
+    rain_factor: float = 1.0,
+    crop: Optional[Crop] = None,
 ) -> Tuple[SeasonResult, pd.DataFrame]:
-    """
-    Run one season in isolation and return the result with its driving weather.
-
-    Used by the single-season view and the sensitivity sweep. Multi-year runs go
-    through `run_observed_record` instead, which shares one climate record.
-    """
-    soil = SOILS[site.soil]
-    planting = _planting_date(site, year)
-    start = planting - pd.Timedelta(days=SPINUP_DAYS)
-
-    params = WeatherGeneratorParams(
-        rainfall_anomaly=rainfall_anomaly,
-        temperature_shift=temperature_shift,
-        diurnal_range_shift=diurnal_range_shift,
-        seed=seed,
-    )
-    weather = generate_weather(
-        site, start=start, days=SPINUP_DAYS + crop.season_length + 30, params=params
-    )
-
+    """Run one historical season and return the result with its daily weather."""
+    soil, crop = _soil_and_crop(soil_key, crop)
+    spinup, growing = season_weather(season, planting, rain_factor, crop.season_length)
     capacity = soil.available_water_capacity * crop.rooting_depth_initial
     result = run_season(
-        weather.iloc[SPINUP_DAYS:],
+        growing,
         crop=crop,
         soil=soil,
-        initial_depletion_fraction=_initial_depletion(weather.iloc[:SPINUP_DAYS], capacity),
-        irrigation_mm=_weekly_irrigation(irrigation_mm_per_week, crop.season_length),
-    )
-    return result, weather
-
-
-def _weekly_irrigation(mm_per_week: float, season_days: int) -> Optional[np.ndarray]:
-    if mm_per_week <= 0:
-        return None
-    irrigation = np.zeros(season_days)
-    irrigation[::7] = mm_per_week
-    return irrigation
-
-
-def run_observed_record(
-    site_key: str,
-    crop_key: str,
-    driver: "str | ClimateDriver" = DEFAULT_DRIVER,
-    assumption: Optional[TeleconnectionAssumption] = None,
-    temperature_shift: float = 0.0,
-    irrigation_mm_per_week: float = 0.0,
-    seed: int = 42,
-    index_record: Optional[pd.DataFrame] = None,
-    min_year: Optional[int] = None,
-) -> ObservedRun:
-    """
-    Run the impact model across every season in the observed index record.
-
-    One continuous daily climate series is generated for the whole period, with
-    each growing season's rainfall scaled by the anomaly implied by that season's
-    ocean index. SPI and SPEI are then computed once on the full record, and the
-    value at the end of the flowering stage is attached to each season.
-    """
-    site = SITES[site_key]
-    crop = CROPS[crop_key]
-    soil = SOILS[site.soil]
-    spec = get_driver(driver)
-    assumption = assumption or TeleconnectionAssumption.for_driver(spec)
-
-    frame = (
-        index_record
-        if index_record is not None
-        else load_index(spec, min_year=min_year)
-    )
-
-    years = [int(year) for year in frame.index]
-    rng = np.random.default_rng(seed)
-
-    anomaly_by_year = {
-        year: rainfall_anomaly_from_index(
-            float(frame.loc[year, "index_standardized"]),
-            site_key,
-            assumption,
-            driver=spec,
-            rng=rng,
-        )
-        for year in years
-    }
-
-    # Cover a spin-up year before the first season and a full year after the last,
-    # so that every season has antecedent conditions and SPI has a complete record.
-    start = pd.Timestamp(year=years[0] - 1, month=1, day=1)
-    end = _planting_date(site, years[-1]) + pd.Timedelta(days=crop.season_length + 40)
-    dates = pd.date_range(start=start, end=end, freq="D")
-
-    season_labels = _season_year(dates, site.planting_day_of_year)
-    anomaly_series = pd.Series(
-        [anomaly_by_year.get(int(label), 0.0) for label in season_labels], index=dates
-    )
-
-    weather = generate_weather(
-        site,
-        start=start,
-        days=len(dates),
-        params=WeatherGeneratorParams(
-            temperature_shift=temperature_shift, seed=int(rng.integers(0, 2**31 - 1))
+        initial_depletion_fraction=_initial_depletion(
+            spinup["precip"].to_numpy(), spinup["et0"].to_numpy(), capacity
         ),
-        rainfall_anomaly=anomaly_series,
     )
+    return result, growing.iloc[: crop.season_length]
 
-    monthly = pd.DataFrame(
-        {
-            "precip": weather["precip"].resample("MS").sum(),
-            "pet": weather["et0"].resample("MS").sum(),
-            "t_mean": weather["t_mean"].resample("MS").mean(),
-        }
-    )
-    monthly["spi3"] = standardized_precipitation_index(monthly["precip"], scale=3)
-    monthly["spi6"] = standardized_precipitation_index(monthly["precip"], scale=6)
-    monthly["spei3"] = standardized_precipitation_evapotranspiration_index(
-        monthly["precip"], monthly["pet"], scale=3
-    )
 
-    irrigation = _weekly_irrigation(irrigation_mm_per_week, crop.season_length)
-    capacity = soil.available_water_capacity * crop.rooting_depth_initial
-    flowering_end_day = (
-        crop.stage_lengths["initial"]
-        + crop.stage_lengths["development"]
-        + crop.stage_lengths["mid"]
-    )
+# ---------------------------------------------------------------------------
+# The historical record
+# ---------------------------------------------------------------------------
 
-    records: List[Dict[str, float]] = []
-    for year in years:
-        planting = _planting_date(site, year)
-        harvest = planting + pd.Timedelta(days=crop.season_length - 1)
-        if harvest > weather.index[-1]:
+def _flowering_window(crop: Crop) -> Tuple[int, int]:
+    start = crop.stage_lengths["initial"] + crop.stage_lengths["development"]
+    return start, start + crop.stage_lengths["mid"]
+
+
+def run_historical(
+    soil_key: str = DEFAULT_SOIL,
+    planting: str = DEFAULT_PLANTING,
+    crop: Optional[Crop] = None,
+) -> pd.DataFrame:
+    """
+    Run every season since 1979 with its own ERA5 weather.
+
+    One row per season, with the ENSO index, the rainfall, the modelled relative
+    yield (fraction of the water-unlimited yield) and some descriptions of how
+    the rain was distributed through the season.
+    """
+    soil, crop = _soil_and_crop(soil_key, crop)
+    enso = load_enso_index()
+    totals = rainy_season_totals()
+    weather = load_daily_weather()
+
+    monthly_precip = weather["precip"].resample("MS").sum()
+    spi3 = standardized_precipitation_index(monthly_precip, scale=3)
+    flower_start, flower_end = _flowering_window(crop)
+
+    rows: List[Dict[str, float]] = []
+    for season in available_seasons(planting, crop.season_length):
+        if season not in enso.index:
             continue
-
-        spinup = weather.loc[planting - pd.Timedelta(days=SPINUP_DAYS) : planting - pd.Timedelta(days=1)]
-        season_weather = weather.loc[planting:harvest]
-
-        result = run_season(
-            season_weather,
-            crop=crop,
-            soil=soil,
-            initial_depletion_fraction=_initial_depletion(spinup, capacity),
-            irrigation_mm=irrigation,
-        )
-
-        flowering = result.stage_summary.set_index("stage").loc["mid"]
-        flowering_month = (planting + pd.Timedelta(days=flowering_end_day)).to_period("M").to_timestamp()
-
-        records.append(
+        result, growing = run_one_season(season, soil_key, planting, crop=crop)
+        precip = growing["precip"].to_numpy()
+        flowering_end_month = (
+            planting_date(season, planting) + pd.Timedelta(days=flower_end - 1)
+        ).to_period("M").to_timestamp()
+        rows.append(
             {
-                "year": year,
-                "index_value": float(frame.loc[year, "index_value"]),
-                "index_standardized": float(frame.loc[year, "index_standardized"]),
-                "phase": str(frame.loc[year, "phase"]),
-                "rainfall_anomaly": anomaly_by_year[year],
-                "season_rainfall": result.season_rainfall,
+                "season": season,
+                "relative_index": float(enso.loc[season, "relative"]),
+                "traditional_index": float(enso.loc[season, "traditional"]),
+                "phase": enso.loc[season, "phase"],
+                "rainfall": float(totals.loc[season]),
+                "crop_season_rainfall": result.season_rainfall,
+                "flowering_rainfall": float(precip[flower_start:flower_end].sum()),
+                "longest_dry_spell": longest_dry_spell(precip),
+                "flowering_dry_spell": longest_dry_spell(precip[flower_start:flower_end]),
+                "stress_days": result.water_stress_days,
+                "mean_t_max": float(growing["t_max"].mean()),
                 "relative_yield": result.relative_yield,
-                "actual_yield": result.actual_yield,
-                "water_stress_days": result.water_stress_days,
-                "et_deficit_ratio": (
-                    1.0 - result.season_et_actual / result.season_et_potential
-                    if result.season_et_potential > 0
-                    else 0.0
-                ),
-                "flowering_deficit": float(flowering["deficit_ratio"]),
-                "spi3": _lookup(monthly["spi3"], flowering_month),
-                "spei3": _lookup(monthly["spei3"], flowering_month),
+                "spi3_flowering": float(spi3.get(flowering_end_month, np.nan)),
             }
         )
-
-    seasons = pd.DataFrame(records).set_index("year")
-    return ObservedRun(
-        seasons=seasons,
-        weather=weather,
-        monthly=monthly,
-        site=site,
-        crop=crop,
-        assumption=assumption,
-        driver=spec,
-    )
+    return pd.DataFrame(rows).set_index("season")
 
 
-def _lookup(series: pd.Series, timestamp: pd.Timestamp) -> float:
-    """Read one month out of an index series, returning NaN if it is missing."""
-    if timestamp in series.index:
-        value = series.loc[timestamp]
-        return float(value) if pd.notna(value) else float("nan")
-    return float("nan")
+def same_total_experiment(
+    total_mm: Optional[float] = None,
+    soil_key: str = DEFAULT_SOIL,
+    planting: str = DEFAULT_PLANTING,
+    crop: Optional[Crop] = None,
+) -> pd.DataFrame:
+    """
+    Give every historical season the same rainy-season total, keeping its timing.
+
+    Each season's daily rainfall is multiplied by (total_mm / its own total), so
+    every season ends up with the same amount of rain but keeps its own pattern
+    of wet days and dry spells. Any spread in yield is then down to timing. By
+    default the total is the median of the historical record.
+    """
+    soil, crop = _soil_and_crop(soil_key, crop)
+    totals = rainy_season_totals()
+    total_mm = float(totals.median()) if total_mm is None else float(total_mm)
+    flower_start, flower_end = _flowering_window(crop)
+
+    rows = []
+    for season in available_seasons(planting, crop.season_length):
+        factor = total_mm / float(totals.loc[season])
+        result, growing = run_one_season(season, soil_key, planting, rain_factor=factor, crop=crop)
+        precip = growing["precip"].to_numpy()
+        rows.append(
+            {
+                "season": season,
+                "original_rainfall": float(totals.loc[season]),
+                "scale_factor": factor,
+                "flowering_rainfall": float(precip[flower_start:flower_end].sum()),
+                "longest_dry_spell": longest_dry_spell(precip),
+                "flowering_dry_spell": longest_dry_spell(precip[flower_start:flower_end]),
+                "relative_yield": result.relative_yield,
+            }
+        )
+    frame = pd.DataFrame(rows).set_index("season")
+    frame.attrs["total_mm"] = total_mm
+    return frame
 
 
-def composite_by_phase(seasons: pd.DataFrame) -> pd.DataFrame:
-    """Mean impact statistics grouped by climate phase, with sample sizes."""
-    grouped = seasons.groupby("phase").agg(
-        seasons=("actual_yield", "size"),
-        mean_yield=("actual_yield", "mean"),
-        median_yield=("actual_yield", "median"),
-        yield_std=("actual_yield", "std"),
-        mean_rainfall=("season_rainfall", "mean"),
-        mean_stress_days=("water_stress_days", "mean"),
-        mean_spi3=("spi3", "mean"),
-    )
+# ---------------------------------------------------------------------------
+# The season ahead: the uncertainty cascade
+# ---------------------------------------------------------------------------
 
-    baseline = seasons["actual_yield"].mean()
-    grouped["yield_anomaly_percent"] = 100.0 * (grouped["mean_yield"] - baseline) / baseline
-
-    order = [p for p in ("negative", "neutral", "positive") if p in grouped.index]
-    return grouped.loc[order]
+CASCADE_STAGES: List[Tuple[str, str]] = [
+    ("driver", "1. ENSO forecast range"),
+    ("regional", "2. + Mopani rainfall response"),
+    ("weather", "3. + day-to-day weather"),
+    ("response", "4. + soil and crop response"),
+]
 
 
 @dataclass
-class ScenarioResult:
-    """A forward run at a specified index value, against a neutral baseline."""
+class _SeasonArrays:
+    """Pre-extracted daily arrays for one season, so the cascade runs quickly."""
 
-    members: pd.DataFrame          # ensemble under the scenario index
-    baseline: pd.DataFrame         # same seeds, index held at zero
-    index_value: float
-    index_standardized: float
-    phase: str
-    driver: ClimateDriver
-    analogues: pd.DataFrame        # observed seasons with a similar index
-
-    @property
-    def yield_loss_percent(self) -> float:
-        """Mean yield change relative to the neutral baseline, in percent."""
-        baseline_mean = self.baseline["actual_yield"].mean()
-        if baseline_mean <= 0:
-            return float("nan")
-        return 100.0 * (self.members["actual_yield"].mean() - baseline_mean) / baseline_mean
+    precip: np.ndarray
+    et0: np.ndarray
+    rainy_mask: np.ndarray
+    total: float
 
 
-def run_scenario(
-    site_key: str,
-    crop_key: str,
-    index_value: float,
-    driver: "str | ClimateDriver" = DEFAULT_DRIVER,
-    observed: Optional[ObservedRun] = None,
-    assumption: Optional[TeleconnectionAssumption] = None,
-    members: int = 60,
-    temperature_shift: float = 0.0,
-    irrigation_mm_per_week: float = 0.0,
-    n_analogues: int = 5,
-    seed: int = 2026,
-) -> ScenarioResult:
+def _season_arrays(planting: str, season_days: int) -> Dict[int, _SeasonArrays]:
+    weather = load_daily_weather()
+    totals = rainy_season_totals()
+    arrays = {}
+    for season in available_seasons(planting, season_days):
+        plant = planting_date(season, planting)
+        window = weather.loc[plant - pd.Timedelta(days=SPINUP_DAYS): plant + pd.Timedelta(days=season_days - 1)]
+        label = rainy_season_label(window.index)
+        mask = np.isin(window.index.month, RAINY_SEASON_MONTHS) & (label == season)
+        arrays[season] = _SeasonArrays(
+            precip=window["precip"].to_numpy(dtype=float),
+            et0=window["et0"].to_numpy(dtype=float),
+            rainy_mask=mask,
+            total=float(totals.loc[season]),
+        )
+    return arrays
+
+
+def _choose_donor(target: float, arrays: Dict[int, _SeasonArrays], rng: np.random.Generator) -> int:
     """
-    Run the impact model forward at a specified index value.
+    A historical season to borrow the day-to-day rainfall sequence from.
 
-    This is what turns the practical from a historical exercise into a forecast.
-    Given a seasonal index value, whether observed or predicted, it produces the
-    distribution of harvests consistent with it, alongside the same ensemble run
-    with the index set to zero so the climate signal can be separated from
-    ordinary weather noise.
-
-    The index is standardised against the observed record, so a scenario value
-    only has meaning relative to the record the model was set up with. The
-    paired seeds mean that member `i` of the scenario and member `i` of the
-    baseline differ only in the rainfall anomaly applied to them.
+    Chosen at random among seasons whose total is within a factor of 1.5 of the
+    target, so that the rescaling stays modest. If fewer than five qualify, the
+    five closest are used instead.
     """
-    spec = get_driver(driver)
-    assumption = assumption or TeleconnectionAssumption.for_driver(spec)
-    observed = observed or run_observed_record(
-        site_key, crop_key, driver=spec, assumption=assumption
+    seasons = np.array(list(arrays))
+    ratio = np.abs(np.log(np.array([arrays[s].total for s in seasons]) / target))
+    pool = seasons[ratio <= np.log(1.5)]
+    if len(pool) < 5:
+        pool = seasons[np.argsort(ratio)[:5]]
+    return int(rng.choice(pool))
+
+
+def _yield_for(season_arrays: _SeasonArrays, target: float, crop: Crop, soil) -> float:
+    factor = target / season_arrays.total
+    precip = np.where(season_arrays.rainy_mask, season_arrays.precip * factor, season_arrays.precip)
+    capacity = soil.available_water_capacity * crop.rooting_depth_initial
+    initial = _initial_depletion(precip[:SPINUP_DAYS], season_arrays.et0[:SPINUP_DAYS], capacity)
+    return relative_yield_from_arrays(
+        precip[SPINUP_DAYS:], season_arrays.et0[SPINUP_DAYS:], crop, soil, initial
     )
 
-    # Reference the scenario against the same record the phases were defined on,
-    # so a scenario value is classified exactly as an observed season would be.
-    record = observed.seasons["index_value"]
-    anomaly = float(index_value - record.mean())
-    standardized = anomaly / float(record.std(ddof=1))
 
-    phase = "neutral"
-    if anomaly >= spec.event_threshold:
-        phase = "positive"
-    elif anomaly <= -spec.event_threshold:
-        phase = "negative"
+@dataclass
+class CascadeResult:
+    """
+    Everything the season-ahead experiment produces.
 
-    site = SITES[site_key]
-    crop = CROPS[crop_key]
-    rng = np.random.default_rng(seed)
-    member_seeds = rng.integers(0, 2**31 - 1, members)
+    `members` has one row per ensemble member and stage. `neutral` is the full
+    cascade (all four sources of uncertainty) run with a neutral ENSO index,
+    and `historical` is the model run on the actual seasons since 1979. The
+    poor-season threshold is the lower tercile of the historical yields, so in
+    the historical record one season in three is poor by definition.
+    """
 
-    def ensemble(index_sd: float) -> pd.DataFrame:
-        # A fresh noise stream per ensemble, but the same weather seeds, so the
-        # two ensembles are comparable member by member.
-        noise_rng = np.random.default_rng(seed + 1)
+    index_range: Tuple[float, float]
+    members: pd.DataFrame
+    neutral: pd.DataFrame
+    historical: pd.DataFrame
+    fit: TeleconnectionFit
+    poor_threshold: float
+    reference_season: int
+    settings: Dict[str, object] = field(default_factory=dict)
+
+    def stage_summary(self) -> pd.DataFrame:
+        """Spread and probability of a poor season at each stage, plus references."""
         rows = []
-        for member, member_seed in enumerate(member_seeds):
-            anomaly = rainfall_anomaly_from_index(
-                index_sd, site_key, assumption, driver=spec, rng=noise_rng
-            )
-            result, _ = run_single_season(
-                site,
-                crop,
-                rainfall_anomaly=anomaly,
-                temperature_shift=temperature_shift,
-                irrigation_mm_per_week=irrigation_mm_per_week,
-                seed=int(member_seed),
-            )
+        groups = [(label, self.members[self.members["stage"] == key]) for key, label in CASCADE_STAGES]
+        groups.append(("Neutral ENSO, all uncertainty", self.neutral))
+        groups.append(("Historical seasons, 1979 on", self.historical))
+        for label, group in groups:
+            values = group["relative_yield"].to_numpy()
             rows.append(
                 {
-                    "member": member,
-                    "rainfall_anomaly": anomaly,
-                    "season_rainfall": result.season_rainfall,
-                    "actual_yield": result.actual_yield,
-                    "relative_yield": result.relative_yield,
-                    "water_stress_days": result.water_stress_days,
+                    "case": label,
+                    "members": len(values),
+                    "p10": float(np.percentile(values, 10)),
+                    "median": float(np.median(values)),
+                    "p90": float(np.percentile(values, 90)),
+                    "spread_p10_p90": float(np.percentile(values, 90) - np.percentile(values, 10)),
+                    "prob_poor": float(np.mean(values < self.poor_threshold)),
                 }
             )
-        return pd.DataFrame(rows)
+        return pd.DataFrame(rows).set_index("case")
 
-    return ScenarioResult(
-        members=ensemble(standardized),
-        baseline=ensemble(0.0),
-        index_value=float(index_value),
-        index_standardized=standardized,
-        phase=phase,
-        driver=spec,
-        analogues=analogue_seasons(observed, index_value, n=n_analogues),
-    )
+    def historical_in_range(self) -> pd.DataFrame:
+        """Past seasons whose index fell inside the forecast range."""
+        low, high = self.index_range
+        h = self.historical
+        return h[(h["relative_index"] >= low) & (h["relative_index"] <= high)]
 
 
-def analogue_seasons(
-    observed: ObservedRun, index_value: float, n: int = 5
-) -> pd.DataFrame:
+def run_cascade(
+    index_range: Tuple[float, float],
+    members: int = 300,
+    soil_key: str = DEFAULT_SOIL,
+    planting: str = DEFAULT_PLANTING,
+    crop: Optional[Crop] = None,
+    seed: int = 2026,
+) -> CascadeResult:
     """
-    The observed seasons whose index was closest to a given value.
+    Run the season ahead, adding one source of uncertainty at a time.
 
-    Analogues are how a forecaster with no model reasons about an approaching
-    event, and they are a useful sanity check on the model: if the analogue
-    seasons are the ones that are remembered as disasters, the model composite
-    should reflect that.
+    Stage 1, ENSO forecast range: the DJF index is drawn uniformly from
+        `index_range`, rainfall is the value on the fitted line, and every member
+        uses the same "typical" historical rainfall sequence, rescaled.
+    Stage 2, + Mopani rainfall response: as stage 1, but the line itself is
+        uncertain (bootstrap refits) and the scatter of real seasons about the
+        line is added.
+    Stage 3, + day-to-day weather: as stage 2, but each member borrows its daily
+        sequence from a different historical season with a similar total.
+    Stage 4, + soil and crop response: as stage 3, but each member also draws a
+        soil type and a yield response at flowering from plausible ranges.
+
+    The default soil and crop are used in stages 1 to 3.
     """
-    seasons = observed.seasons
-    distance = (seasons["index_value"] - index_value).abs()
-    closest = seasons.loc[distance.nsmallest(min(n, len(seasons))).index]
-    return closest.assign(
-        index_difference=(closest["index_value"] - index_value)
-    ).sort_values("index_value", ascending=False)
+    low, high = sorted(float(v) for v in index_range)
+    crop = crop or MAIZE
+    default_soil = SOILS[soil_key]
+    fit = fit_teleconnection()
+    arrays = _season_arrays(planting, crop.season_length)
+    historical = run_historical(soil_key, planting, crop)
 
+    # The "typical" sequence for stages 1 and 2: the season closest to the median total.
+    totals = pd.Series({s: a.total for s, a in arrays.items()})
+    reference = int((totals - totals.median()).abs().idxmin())
 
-def sensitivity_sweep(
-    site_key: str,
-    crop_key: str,
-    anomalies: np.ndarray,
-    members: int = 20,
-    temperature_shift: float = 0.0,
-    irrigation_mm_per_week: float = 0.0,
-    seed: int = 7,
-) -> pd.DataFrame:
-    """
-    Yield response to seasonal rainfall anomaly, as an ensemble.
+    soil_options = [SOILS[k] for k in CASCADE_SOILS]
+    crop_options = [crop.with_flowering_ky(ky) for ky in CASCADE_FLOWERING_KY]
 
-    Each anomaly is run `members` times with different weather realisations, which
-    shows the students that a single deterministic run tells them very little. The
-    spread at a given anomaly comes purely from rainfall timing, not from the total.
-    """
-    site = SITES[site_key]
-    crop = CROPS[crop_key]
-    rng = np.random.default_rng(seed)
-
-    rows = []
-    for anomaly in anomalies:
+    def one_stage(stage: str, lo: float, hi: float, rng: np.random.Generator) -> List[Dict]:
+        rows = []
         for member in range(members):
-            result, _ = run_single_season(
-                site,
-                crop,
-                rainfall_anomaly=float(anomaly),
-                temperature_shift=temperature_shift,
-                irrigation_mm_per_week=irrigation_mm_per_week,
-                seed=int(rng.integers(0, 2**31 - 1)),
-            )
+            index_value = rng.uniform(lo, hi)
+            if stage == "driver":
+                target = float(fit.predict(index_value))
+            else:
+                target = fit.sample(index_value, rng)
+            donor = reference if stage in ("driver", "regional") else _choose_donor(target, arrays, rng)
+            soil, member_crop = default_soil, crop
+            if stage == "response":
+                k_soil = int(rng.integers(len(soil_options)))
+                k_crop = int(rng.integers(len(crop_options)))
+                soil, member_crop = soil_options[k_soil], crop_options[k_crop]
             rows.append(
                 {
-                    "rainfall_anomaly": float(anomaly),
+                    "stage": stage,
                     "member": member,
-                    "season_rainfall": result.season_rainfall,
-                    "relative_yield": result.relative_yield,
-                    "actual_yield": result.actual_yield,
-                    "water_stress_days": result.water_stress_days,
+                    "index": index_value,
+                    "rainfall": target,
+                    "sequence_from": donor,
+                    "soil": soil.name,
+                    "flowering_ky": member_crop.ky_by_stage["mid"],
+                    "relative_yield": _yield_for(arrays[donor], target, member_crop, soil),
                 }
             )
-    return pd.DataFrame(rows)
+        return rows
 
+    rng = np.random.default_rng(seed)
+    rows: List[Dict] = []
+    for stage, _ in CASCADE_STAGES:
+        rows.extend(one_stage(stage, low, high, rng))
+    neutral_rows = one_stage("response", LA_NINA_THRESHOLD, EL_NINO_THRESHOLD, np.random.default_rng(seed + 1))
 
-def _bias_sweep(
-    site_key: str,
-    crop_key: str,
-    biases: np.ndarray,
-    column: str,
-    apply_bias,
-    members: int,
-    rainfall_anomaly: float,
-    irrigation_mm_per_week: float,
-    seed: int,
-) -> pd.DataFrame:
-    """
-    Shared machinery for the driver-error sweeps.
-
-    Rainfall is held fixed so that the temperature error is the only thing
-    varying. Every member at every bias uses the same weather seed, so a
-    difference between two biases is caused by the bias alone and not by
-    resampling the rainfall. `apply_bias` turns one bias value into the keyword
-    arguments that impose it.
-    """
-    site = SITES[site_key]
-    crop = CROPS[crop_key]
-
-    # Shared seeds across biases: the paired design removes sampling noise.
-    member_seeds = np.random.default_rng(seed).integers(0, 2**31 - 1, members)
-
-    rows = []
-    for bias in biases:
-        for member, member_seed in enumerate(member_seeds):
-            result, weather = run_single_season(
-                site,
-                crop,
-                rainfall_anomaly=rainfall_anomaly,
-                irrigation_mm_per_week=irrigation_mm_per_week,
-                seed=int(member_seed),
-                **apply_bias(float(bias)),
-            )
-            rows.append(
-                {
-                    column: float(bias),
-                    "member": member,
-                    "actual_yield": result.actual_yield,
-                    "relative_yield": result.relative_yield,
-                    "et_potential": result.season_et_potential,
-                    "water_stress_days": result.water_stress_days,
-                    "mean_diurnal_range": float(
-                        (weather["t_max"] - weather["t_min"]).mean()
-                    ),
-                }
-            )
-    return pd.DataFrame(rows)
-
-
-def temperature_bias_sweep(
-    site_key: str,
-    crop_key: str,
-    biases: np.ndarray,
-    members: int = 20,
-    rainfall_anomaly: float = 0.0,
-    irrigation_mm_per_week: float = 0.0,
-    seed: int = 13,
-) -> pd.DataFrame:
-    """
-    Yield response to a uniform temperature offset in the driving weather.
-
-    A uniform offset moves the daily maximum and minimum together, so it reaches
-    ET0 only through the mean term in Hargreaves-Samani. It is the error a
-    student would naively assume a biased weather model has, and it is not the
-    error the AI model in `driver_error.py` actually makes.
-    """
-    return _bias_sweep(
-        site_key, crop_key, biases,
-        column="temperature_bias",
-        apply_bias=lambda value: {"temperature_shift": value},
-        members=members,
-        rainfall_anomaly=rainfall_anomaly,
-        irrigation_mm_per_week=irrigation_mm_per_week,
-        seed=seed,
+    return CascadeResult(
+        index_range=(low, high),
+        members=pd.DataFrame(rows),
+        neutral=pd.DataFrame(neutral_rows),
+        historical=historical,
+        fit=fit,
+        poor_threshold=float(historical["relative_yield"].quantile(1 / 3)),
+        reference_season=reference,
+        settings={"members": members, "soil": soil_key, "planting": planting, "seed": seed},
     )
-
-
-def diurnal_range_sweep(
-    site_key: str,
-    crop_key: str,
-    range_biases: np.ndarray,
-    members: int = 20,
-    rainfall_anomaly: float = 0.0,
-    irrigation_mm_per_week: float = 0.0,
-    temperature_shift: float = 0.0,
-    seed: int = 17,
-) -> pd.DataFrame:
-    """
-    Yield response to an error in the daily temperature *range*.
-
-    This is the error the AI weather model actually makes: it is roughly right at
-    dawn and far too cold in the early afternoon, so it damps the daily heating
-    cycle without shifting the mean nearly as much. Hargreaves-Samani takes the
-    square root of the range, so this route into ET0 is both distinct from a
-    uniform offset and, for a given number of degrees, considerably stronger.
-    """
-    return _bias_sweep(
-        site_key, crop_key, range_biases,
-        column="diurnal_range_bias",
-        apply_bias=lambda value: {
-            "diurnal_range_shift": value,
-            "temperature_shift": temperature_shift,
-        },
-        members=members,
-        rainfall_anomaly=rainfall_anomaly,
-        irrigation_mm_per_week=irrigation_mm_per_week,
-        seed=seed,
-    )
-
-
-def available_options() -> Dict[str, Dict[str, str]]:
-    """Human-readable site and crop menus for the dashboard."""
-    return {
-        "sites": {key: site.name for key, site in SITES.items()},
-        "crops": {key: crop.name for key, crop in CROPS.items()},
-    }

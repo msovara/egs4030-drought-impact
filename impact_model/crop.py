@@ -12,12 +12,17 @@ Two components, both standard in operational agricultural drought assessment:
    water deficit into a yield loss, weighted by growth stage through the yield
    response factor Ky.
 
-The whole model is around 150 lines and runs a season in milliseconds, which is
-the point: students can see every equation and still run hundreds of seasons.
+In plain terms: the root zone is treated as a bucket. Rain fills it, the crop
+empties it, and once it falls below a threshold the crop can no longer draw
+water fast enough and grows less. How much yield that costs depends on when in
+the season it happens.
+
+The whole model is around 200 lines and runs a season in a few milliseconds, so
+it is practical to run thousands of seasons on a laptop.
 """
 
 from dataclasses import dataclass, field
-from typing import Dict, List
+from typing import Dict, List, Tuple
 
 import numpy as np
 import pandas as pd
@@ -97,43 +102,18 @@ def scs_runoff(precip: float, curve_number: float) -> float:
     return excess * excess / (precip + 0.8 * potential_retention)
 
 
-def run_season(
-    weather: pd.DataFrame,
+def _simulate(
+    precip: np.ndarray,
+    et0: np.ndarray,
     crop: Crop,
     soil: Soil,
-    initial_depletion_fraction: float = 0.5,
-    irrigation_mm: np.ndarray | None = None,
-    new_soil_relative_depletion: float = 0.0,
-) -> SeasonResult:
-    """
-    Run the water balance and yield model for one growing season.
-
-    `weather` must cover at least `crop.season_length` days and carry `precip`
-    and `et0` columns. `irrigation_mm` optionally supplies applied water per day.
-
-    `new_soil_relative_depletion` sets how wet the soil is that the roots reach as
-    they grow downwards, from 0 for field capacity to 1 for wilting point. The
-    default of 0 is the standard FAO-56 simplification and is optimistic: it means
-    every centimetre of root growth delivers fully charged soil. In a dryland
-    season on a shallow profile that assumption flatters the crop, which makes it
-    a good thing for students to vary and argue about.
-    """
+    initial_depletion_fraction: float,
+    new_soil_relative_depletion: float,
+) -> Dict[str, np.ndarray]:
+    """The daily water balance loop, on plain arrays."""
     season_days = crop.season_length
-    if len(weather) < season_days:
-        raise ValueError(
-            f"Weather series has {len(weather)} days but the season needs {season_days}."
-        )
-
-    weather = weather.iloc[:season_days]
-    precip = weather["precip"].to_numpy(dtype=float)
-    et0 = weather["et0"].to_numpy(dtype=float)
-    irrigation = (
-        np.zeros(season_days) if irrigation_mm is None else np.asarray(irrigation_mm, float)
-    )
-
     kc = crop_coefficient_curve(crop)
     root_depth = rooting_depth_curve(crop)
-    stages = _stage_for_each_day(crop)
 
     total_available_water = soil.available_water_capacity * root_depth
     readily_available_water = crop.depletion_fraction * total_available_water
@@ -162,7 +142,7 @@ def run_season(
         previous_taw = taw
 
         runoff[day] = scs_runoff(precip[day], soil.curve_number)
-        infiltration = precip[day] - runoff[day] + irrigation[day]
+        infiltration = precip[day] - runoff[day]
 
         etc = kc[day] * et0[day]
         et_potential[day] = etc
@@ -174,9 +154,7 @@ def run_season(
             ks = 1.0
         stress_coefficient[day] = ks
 
-        # The crop cannot transpire water that is not in the profile. Without this
-        # cap a daily time step lets depletion overshoot TAW, and clamping it back
-        # afterwards would quietly create water.
+        # The crop cannot transpire water that is not in the profile.
         extractable = max(taw - current_depletion + infiltration, 0.0)
         et_actual[day] = min(ks * etc, extractable)
 
@@ -189,26 +167,106 @@ def run_season(
 
         depletion[day] = current_depletion
 
-    daily = pd.DataFrame(
-        {
-            "precip": precip,
-            "et0": et0,
-            "kc": kc,
-            "et_potential": et_potential,
-            "et_actual": et_actual,
-            "stress_coefficient": stress_coefficient,
-            "depletion": depletion,
-            "total_available_water": total_available_water,
-            "readily_available_water": readily_available_water,
-            "root_depth": root_depth,
-            "runoff": runoff,
-            "deep_percolation": deep_percolation,
-            "root_zone_gain": root_zone_gain,
-            "soil_water": total_available_water - depletion,
-            "stage": stages,
-        },
-        index=weather.index,
+    return {
+        "precip": precip,
+        "et0": et0,
+        "kc": kc,
+        "et_potential": et_potential,
+        "et_actual": et_actual,
+        "stress_coefficient": stress_coefficient,
+        "depletion": depletion,
+        "total_available_water": total_available_water,
+        "readily_available_water": readily_available_water,
+        "root_depth": root_depth,
+        "runoff": runoff,
+        "deep_percolation": deep_percolation,
+        "root_zone_gain": root_zone_gain,
+    }
+
+
+def _stage_bounds(crop: Crop) -> List[Tuple[str, int, int]]:
+    bounds, start = [], 0
+    for stage in STAGE_ORDER:
+        end = start + crop.stage_lengths[stage]
+        bounds.append((stage, start, end))
+        start = end
+    return bounds
+
+
+def _check_weather(weather: pd.DataFrame, crop: Crop) -> None:
+    if len(weather) < crop.season_length:
+        raise ValueError(
+            f"Weather series has {len(weather)} days but the season needs "
+            f"{crop.season_length}."
+        )
+
+
+def relative_yield_from_arrays(
+    precip: np.ndarray,
+    et0: np.ndarray,
+    crop: Crop,
+    soil: Soil,
+    initial_depletion_fraction: float = 0.5,
+    new_soil_relative_depletion: float = 0.0,
+) -> float:
+    """
+    The relative yield of one season from daily arrays starting at planting.
+
+    Gives exactly the same answer as `run_season(...).relative_yield`, without
+    building the daily tables. Used by experiments that run thousands of seasons.
+    """
+    days = crop.season_length
+    if len(precip) < days or len(et0) < days:
+        raise ValueError(f"Need {days} days of weather, got {min(len(precip), len(et0))}.")
+    arrays = _simulate(
+        np.asarray(precip, dtype=float)[:days],
+        np.asarray(et0, dtype=float)[:days],
+        crop, soil, initial_depletion_fraction, new_soil_relative_depletion,
     )
+    relative_yield = 1.0
+    for stage, start, end in _stage_bounds(crop):
+        etc_sum = arrays["et_potential"][start:end].sum()
+        eta_sum = arrays["et_actual"][start:end].sum()
+        deficit_ratio = 1.0 - eta_sum / etc_sum if etc_sum > 0 else 0.0
+        relative_yield *= max(1.0 - crop.ky_by_stage[stage] * deficit_ratio, 0.0)
+    return float(np.clip(relative_yield, 0.0, 1.0))
+
+
+def run_season(
+    weather: pd.DataFrame,
+    crop: Crop,
+    soil: Soil,
+    initial_depletion_fraction: float = 0.5,
+    new_soil_relative_depletion: float = 0.0,
+) -> SeasonResult:
+    """
+    Run the water balance and yield model for one growing season.
+
+    `weather` must cover at least `crop.season_length` days from planting and
+    carry `precip` and `et0` columns, in mm/day.
+
+    `initial_depletion_fraction` is how dry the root zone is at planting, from 0
+    (full) to 1 (at wilting point).
+
+    `new_soil_relative_depletion` sets how wet the soil is that the roots reach as
+    they grow downwards, from 0 for field capacity to 1 for wilting point. The
+    default of 0 is the standard FAO-56 simplification and is optimistic for a
+    dryland profile, which makes it a reasonable thing to vary.
+    """
+    _check_weather(weather, crop)
+    season_days = crop.season_length
+    weather = weather.iloc[:season_days]
+    arrays = _simulate(
+        weather["precip"].to_numpy(dtype=float),
+        weather["et0"].to_numpy(dtype=float),
+        crop, soil, initial_depletion_fraction, new_soil_relative_depletion,
+    )
+    total_available_water = arrays["total_available_water"]
+    stages = _stage_for_each_day(crop)
+
+    daily = pd.DataFrame(arrays, index=weather.index)
+    daily["soil_water"] = total_available_water - daily["depletion"]
+    daily["stage"] = stages
     daily["day_of_season"] = np.arange(1, season_days + 1)
 
     stage_rows = []
