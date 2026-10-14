@@ -2,29 +2,28 @@
 
 **Practical assignment following the guest lecture on climate impact modelling**
 
-**Total:** 100 marks (out of 1 250 for the module)
-**Expected time:** about 6 hours, plus about 1.5 hours for the 5030S extension
-**Submission:** one PDF report and your code (see "What to submit")
+**Total:** 100 marks 
+
+**Submission:** one PDF report with your code 
 
 ---
 
 ## The situation
 
-It is mid-October 2026. A strong El Niño has been developing in the tropical
-Pacific since the middle of the year, and the seasonal forecasts from several
-centres suggest it will remain strong through December to February. In the
+It is mid-October 2026. A strong El Niño is developing in the tropical
+Pacific, starting in June 2026, and the seasonal forecasts from all major seasonal forecasting
+centres suggest it will reach or approach record strength by the start of 2026/27 Austral summer. In the
 summer-rainfall region of South Africa, maize planting will start within the
 next few weeks.
 
-Imagine you work for the Limpopo Department of Agriculture and Rural
-Development. Your director has asked:
+Imagine you are asked by the Limpopo Department of Agriculture and Land Reform:
 
 > *Should we be warning dryland maize farmers in the Mopani district about the
-> coming season, and how confident can we be?*
+> coming season, and if so, how confidently?*
 
 In this assignment you use a simple crop model to work towards an answer. The
 aim is not a single prediction of the harvest. It is a sensible range of
-possible outcomes, and an understanding of where the uncertainty in that range
+plausible outcomes, and an understanding of where the uncertainty in that range
 comes from.
 
 ---
@@ -33,13 +32,13 @@ comes from.
 
 The model follows a chain of steps from the ocean to the crop:
 
-1. **The ENSO index.** The state of ENSO is summarised by the relative Niño 3.4
+1. **The ENSO index.** The state of El Niño-Southern Oscillation (ENSO) is summarised by the relative Niño 3.4
    index, averaged over December to February (DJF). It is calculated from ERA5
    sea surface temperatures in the same way as the index in the C3S seasonal
    forecasts.
-2. **Mopani rainfall.** November to March rainfall over the dryland maize areas
+2. **Mopani District rainfall.** November to March rainfall over the dryland maize areas
    of the Mopani district comes from ERA5, from 1979 to the present. The link
-   between the index and this rainfall is fitted from the historical record.
+   between the index and this rainfall is fitted from the historical record, estimate from the ERA5 reanalysis area average.
 3. **Soil water.** A daily soil water balance tracks how much water is
    available to the crop's roots.
 4. **Maize yield.** The crop's yield is reduced when it cannot get enough
@@ -49,7 +48,7 @@ Yields are given as a percentage of what the crop would produce with no water
 shortage. Please treat them that way and not as predictions of tonnes per
 hectare (see "A note on the model's limits").
 
-### A short primer on soil water and maize
+<!--### A short primer on soil water and maize
 
 You are not expected to have studied soil physics or crop physiology. The
 following, together with the lecture, is all you need for this assignment.
@@ -76,16 +75,16 @@ season costs much less. In the model this is represented by a yield response
 factor, Ky, which is 1.5 around flowering compared with 0.4 during early growth.
 A dry spell of two or three weeks in February, when a crop planted in late
 November is flowering, can therefore matter more than a
-dry December.
+dry December.-->
 
 ### Three ideas to keep in mind
 
 These run through the whole assignment:
 
-- **Mechanism first.** Understand the physical reasons why El Niño affects
+- **Mechanisms matter.** Understand the physical reasons why El Niño affects
   rainfall over north-eastern South Africa, and why rainfall affects maize,
-  before looking at statistical relationships.
-- **An ENSO index is not an impact.** The index describes the ocean. What
+  to inform your interpretation of statistical relationships.
+- **An ENSO index is not an impact.** The index describes the ocean state in a particular area. What
   happens to a maize crop in Mopani depends on several further steps, each of
   which adds variation.
 - **A strong El Niño shifts the odds.** It makes a poor season more likely, but
@@ -95,10 +94,10 @@ These run through the whole assignment:
 
 ## Setting up
 
-Work in WSL with the miniforge installation you set up for earlier tasks. The
-repository includes an `environment.yml` file, which builds a conda environment
+Work in WSL with the miniforge/conda installation you have. The
+repository includes an `environment.yml` file, which builds a new conda environment
 called `impact` with every package from conda-forge. The ERA5 data the model
-needs are already in the repository, so you do not need a Copernicus account.
+needs are already in the repository, so you do not need a Copernicus account to download and access them.
 
 Create the environment once, from the repository root:
 
@@ -124,7 +123,7 @@ and the message tells you how to fix it.
 
 There are two ways to use the model.
 
-- **The dashboard**, for exploring: run `streamlit run app.py` and open the
+- **The dashboard**, for exploring: run `streamlit run app.py` in your terminal from the directory where the  and open the
   address it prints (usually <http://localhost:8501>) in your Windows browser.
   Its tabs follow the tasks below.
 - **The figure templates**, for your report: one script per figure, in
@@ -186,8 +185,7 @@ Run `fig2_enso_rainfall.py`. It plots the DJF relative Niño 3.4 index against
 November to March rainfall over the study area for each season since 1979, and
 prints the fitted relationship.
 
-**(a)** Report the fitted slope (in mm per °C and as a percentage of mean
-rainfall), its 90% range, the correlation and the p-value. In plain words, how
+**(a)** Report the fitted slope (in mm/K), its 90% range, the correlation and the p-value. In plain words, how
 much of the year-to-year variation in Mopani rainfall is associated with ENSO?
 
 **(b)** Identify the El Niño seasons that had close to or above-median rainfall,
