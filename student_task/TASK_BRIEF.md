@@ -30,7 +30,7 @@ comes from.
 
 ## What the model does
 
-The model follows a chain of steps from the ocean to the crop:
+The model follows a chain of steps from the Pacific Ocean to the crop:
 
 1. **The ENSO index.** The state of El Niño-Southern Oscillation (ENSO) is summarised by the relative Niño 3.4
    index, averaged over December to February (DJF). It is calculated from ERA5
@@ -48,7 +48,7 @@ Yields are given as a percentage of what the crop would produce with no water
 shortage. Please treat them that way and not as predictions of tonnes per
 hectare (see "A note on the model's limits").
 
-<!--### A short primer on soil water and maize
+<!--### A short primer on soil water and maize -- produced by Claude, currently not included in task description
 
 You are not expected to have studied soil physics or crop physiology. The
 following, together with the lecture, is all you need for this assignment.
@@ -123,15 +123,14 @@ and the message tells you how to fix it.
 
 There are two ways to use the model.
 
-- **The dashboard**, for exploring: run `streamlit run app.py` in your terminal from the directory where the  and open the
-  address it prints (usually <http://localhost:8501>) in your Windows browser.
-  Its tabs follow the tasks below.
+- **The dashboard**, for exploring: run `streamlit run app.py` in your terminal from the directory that you have cloned the GitHub repository to and open the
+  address it prints (usually <http://localhost:8501>) in your web browser.
+  Its tabs follow the task outline below.
 - **The figure templates**, for your report: one script per figure, in
   `student_task/templates/`. Each runs as it is and saves a PNG to
   `student_task/figures/`. The settings you might want to change, such as which
   seasons to plot, are at the top of each script. You are welcome to change the
-  figures further, but you will not be assessed on figure design, only on
-  whether they are readable and support your answer.
+  figures further, if you feel it helps you communicate the message better.
 
 ```bash
 python student_task/templates/fig1_one_season.py
