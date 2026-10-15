@@ -94,8 +94,7 @@ something this model can supply.
 
 NOAA CPC's advisory of 8 October 2026 had Niño 3.4 at +2.1 °C, with a strong-to-very strong event likely through January–March 2027 and an 83% chance that October–December exceeds any event since 1950. The three closest analogues in the observed record — 1982/83, 1997/98 and 2015/16 — are the seasons of the best-documented southern African crop failures.
 
-For the forward experiment the model does not generate synthetic weather.
-Instead, for each ensemble member it:
+For the forward experiment, for each ensemble member it:
 
 1. draws a DJF index value from the forecast range;
 2. turns it into a November–March rainfall total using the fitted line (and, from
