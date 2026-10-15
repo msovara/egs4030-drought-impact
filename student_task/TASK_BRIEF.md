@@ -163,42 +163,41 @@ The suggested word counts are guides to the depth expected, not strict limits.
 
 ### Introduction: points to consider
 
-**(a)** Justify briefly why the Department should be considering potential impacts of the developing El Niño conditions in the tropical
-Pacific. In this description, note the observed relationship between Limpopo rainfall and ENSO and the sensitivity of rain-fed maize to climate variability. Explain briefly why it is justified under a climate change regime to prefer a *relative* Niño 3.4 index rather than the traditional one. 
+**(1.1)** Justify briefly why the Department should be considering potential impacts of the developing El Niño conditions in the tropical
+Pacific. In this description, note the observed relationship between Limpopo rainfall and ENSO and the sensitivity of rain-fed maize to climate variability.
+
+**(1.2)** Explain briefly why it is justified under a climate change regime to prefer a *relative* Niño 3.4 index rather than the traditional one. 
 
 
-### Task 2: What the historical record shows (20 marks)
+### Methods: points to cover
 
-Run `fig2_enso_rainfall.py`. It plots the DJF relative Niño 3.4 index against
-November to March rainfall over the study area for each season since 1979, and
-prints the fitted relationship.
+**(2.1)** Describe the chain of models used very briefly and simply for the benefit of the planners at the Limpopo Dept. of Agriculture and Land Reform
 
-**(a)** Report the fitted slope (in mm/K), its 90% range, the correlation and the p-value. In plain words, how
-much of the year-to-year variation in Mopani rainfall is associated with ENSO?
+**(2.2)** List the different data sources used and where they are input into the modelling chain. 
+
+**(2.3)** Note some limitations of this set of data sources in this context.
+
+**(2.4)** The model chain depends on the fitted teleconnection relationship, using a linear regression. Run `fig2_enso_rainfall.py`. It plots the DJF relative Niño 3.4 index against
+November to March rainfall over the study area for each season since 1979, and prints the fitted relationship.
+
+**(a)** Report the fitted slope (in mm/K), its 90% confidence interval, the $R^2$ and the $p$-value for the analysis. 
 
 **(b)** Identify the El Niño seasons that had close to or above-median rainfall,
 and the seasons with well below-median rainfall that were not El Niño seasons.
-Suggest, with reasons, what else might have influenced rainfall in some of
-those seasons. You can draw on the lecture and on what you know of other
-influences on southern African rainfall.
+Suggest, what else might have influenced rainfall in some of
+those seasons.
 
-**(c)** Give two limitations of this evidence. For example, consider the number
-of seasons and of strong El Niño events, the fact that ERA5 rainfall comes from
-a weather model constrained by observations rather than from rain gauges, and
-the use of an average over the whole study area.
-
-(About 400 words in total, with Figure 2.)
+**(c)** Give a limitation of this evidence. For example, consider the number
+of seasons and of strong El Niño events, the assumed shape of the relationship or the nature of the gridded, model-derived reanalysis rainfall data.
 
 ### Results: General
 
-**(b)** Run `fig1_one_season.py`, which compares the 2015/16 season with
-1999/00 by default. You may replace 1999/00 with another season if you prefer.
+**(3.1)** Run `fig1_one_season.py`, which compares the 2015/16 season with
+1999/00 by default. You may replace either season with another season if you prefer and think it illustrates your point better.
 For each season, describe when during the growing season the crop was short of
-water, and explain why a shortage around flowering reduced the yield more than
-one earlier in the season.  (About 200 words, with Figure 1.)
+water.  
 
-
-Run `fig3_rainfall_to_yield.py`.
+**(3.2)** Run `fig3_rainfall_to_yield.py`.
 
 **(a)** Compare how closely modelled yield follows the ENSO index with how
 closely it follows November to March rainfall. Explain the difference in terms
@@ -213,8 +212,6 @@ difference using the timing of rain and dry spells relative to flowering.
 **(c)** In two or three sentences, what does this suggest about using a
 seasonal rainfall forecast, or an ENSO index on its own, to anticipate effects
 on maize?
-
-(About 400 words in total, with Figure 3 and a second version of Figure 1.)
 
 ### Task 4: The 2026/27 season as a range of outcomes (30 marks)
 
