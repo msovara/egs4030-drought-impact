@@ -142,7 +142,7 @@ The tabs follow the order of the assignment.
 1. **One season.** Pick a past season and watch the root-zone water fall through
    the stress threshold. The growth stages are shaded, so it is easy to see
    whether a dry spell fell during flowering. 2015/16 is a useful starting
-   point.
+   point. Finish on the stage table, which shows exactly where the yield went.
 2. **Same rain, different harvests.** Every past season is given the same
    November–March total, keeping its own timing. The spread of yields comes
    from timing alone.
@@ -157,13 +157,14 @@ A possible outline for the session, to adjust as needed:
 
 | Time | Content |
 |---|---|
-| 0:00–0:25 | What an impact model is, and how it differs from a climate model |
-| 0:25–0:45 | How El Niño reaches southern African rainfall |
-| 0:45–1:05 | The soil water bucket and why flowering matters (Tabs 1, 2 and 5) |
-| 1:05–1:15 | Break |
-| 1:15–1:35 | The historical record and the relative Niño 3.4 index (Tab 3) |
-| 1:35–1:55 | The coming season and the uncertainty cascade (Tab 4) |
-| 1:55–2:10 | The assignment, and getting everyone's environment working |
+| 0:00–0:25 | What is an impact model, and how does it differ from a climate model |
+| 0:25–0:45 | The equations, on the board, using Tab 5 |
+| 0:45–1:15 | Live demonstration, Tabs 1 and 2 |
+| 1:15–1:30 | Break |
+| 1:30–1:45 | Tab 3, ENSO, rainfall and maize in Limpopo |
+| 1:45–2:00 | Tab 4: The season ahead |
+| 2:00–2:10 | Tab 6: WRF-Hydro and the cluster fit |
+| 2:10–2:30 | The assignment, and getting everyone running |
 
 ---
 
