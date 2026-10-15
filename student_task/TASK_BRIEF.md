@@ -164,7 +164,7 @@ The suggested word counts are guides to the depth expected, not strict limits.
 ### Introduction: points to consider
 
 **(1.1)** Justify briefly why the Department should be considering potential impacts of the developing El Niño conditions in the tropical
-Pacific. In this description, note the observed relationship between Limpopo rainfall and ENSO and the sensitivity of rain-fed maize to climate variability.
+Pacific. In this description, note the observed relationship between Limpopo rainfall and ENSO and the sensitivity of rain-fed maize to climate variability. You may want to consider the South African Weather Service [press releases](https://www.weathersa.co.za/media) about the 2026/27 ENSO for this purpose. 
 
 **(1.2)** Explain briefly why it is justified under a climate change regime to prefer a *relative* Niño 3.4 index rather than the traditional one. 
 
