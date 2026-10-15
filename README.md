@@ -40,6 +40,10 @@ The figure templates for the assignment are in `student_task/templates/`, and
 `requirements.txt` is kept for the hosted copy of the dashboard on Streamlit
 Community Cloud. It installs only what the dashboard needs.
 
+### Running it without installing anything
+
+The dashboard is hosted at https://msovara-egs4030-drought-impact-app-ylw3zh.streamlit.app/, so students whose Python breaks during the practical can still take part. Use the Live app badge above. You can also deploy your own copy from this repo with app.py as the main module.
+
 ---
 
 ## Data
