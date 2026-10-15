@@ -1,4 +1,4 @@
-# ENSO and maize in the Mopani district
+# From the ocean to the maize field
 
 A small crop water-balance model for the EGS4030/5030S guest lecture on climate
 impact modelling at the University of Cape Town (19 October 2026), and the
@@ -87,6 +87,8 @@ absolute figure for dryland maize in Mopani depends on management and is not
 something this model can supply.
 
 ### The season ahead
+
+NOAA CPC's advisory of 8 October 2026 had Niño 3.4 at +2.1 °C, with a strong-to-very strong event likely through January–March 2027 and an 83% chance that October–December exceeds any event since 1950. The three closest analogues in the observed record — 1982/83, 1997/98 and 2015/16 — are the seasons of the best-documented southern African crop failures.
 
 For the forward experiment the model does not generate synthetic weather.
 Instead, for each ensemble member it:
