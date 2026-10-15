@@ -294,18 +294,18 @@ and cannot tell you is a large part of impact modelling in practice.
 
 - Hoell, A., Funk, C., Magadzire, T., Zinke, J. and Husak, G. (2015). El
   Niño–Southern Oscillation diversity and Southern Africa teleconnections during
-  austral summer. *Climate Dynamics*, 45, 1583–1599. {doi.org/10.1007/s00382-014-2414-z}
+  austral summer. *Climate Dynamics*, 45, 1583–1599. https://doi.org/10.1007/s00382-014-2414-z
 - Archer, E.R.M., Landman, W.A., Tadross, M.A., Malherbe, J., Weepener, H.,
   Maluleke, P. and Marumbwa, F.M. (2017). Understanding the evolution of the
   2014–2016 summer rainfall seasons in southern Africa: key lessons. *Climate
-  Risk Management*, 16, 22–28. {https://doi.org/10.1016/j.crm.2017.03.006}
+  Risk Management*, 16, 22–28. https://doi.org/10.1016/j.crm.2017.03.006
 - Van Oldenborgh, G.J., Hendon, H., Stockdale, T., L'Heureux, M., Coughlan de
   Perez, E., Singh, R. and van Aalst, M. (2021). Defining El Niño indices in a
-  warming climate. *Environmental Research Letters*, 16(4), 044003.
--  Gillian Kay et al 2026 Environ. Res. Lett. 21 124001. DOI:{doi.org/10.1088/1748-9326/ae7587}
+  warming climate. *Environmental Research Letters*, 16(4), 044003. https://doi.org/10.1088/1748-9326/abe9ed
+-  Gillian Kay et al 2026 *Environ. Res. Lett.* 21, 124001. DOI:https://doi.org/10.1088/1748-9326/ae7587
 - L'Heureux, M.L., Tippett, M.K., Wheeler, M.C., Nguyen, H., Narsey, S.,
   Johnson, N., Hu, Z.-Z., Watkins, A.B., Lucas, C., Ganter, C., Becker, E.,
   Wang, W. and Di Liberto, T. (2024). A relative sea surface temperature index
   for classifying ENSO events in a changing climate. *Journal of Climate*,
-  37(4), 1197–1211.
+  37(4), 1197–1211. https://doi.org/10.1175/JCLI-D-23-0406.1
 
