@@ -4,7 +4,7 @@
 
 **Total:** 100 marks 
 
-**Submission:** one PDF report with your code 
+**Submission:** one PDF report of approximately 1300 words (EGS4030S) to 1500 words (5030S), the requested figures and your modified your code 
 
 **DUE** With portfolio submission (no feedback submission for this task)
 
@@ -33,9 +33,8 @@ comes from.
 The model follows a chain of steps from the Pacific Ocean to the crop:
 
 1. **The ENSO index.** The state of El Niño-Southern Oscillation (ENSO) is summarised by the relative Niño 3.4
-   index, averaged over December to February (DJF). It is calculated from ERA5
-   sea surface temperatures in the same way as the index in the C3S seasonal
-   forecasts.
+   index (see [the Copernicus discussion on using a relative Niño index] (https://doi.org/10.21957/d05ccfe150)), averaged over December to February (DJF). It is calculated from ERA5
+   sea surface temperatures in the same way as the index in the [C3S seasonal forecast plots](https://climate.copernicus.eu/charts/packages/c3s_seasonal/products/c3s_seasonal_plume_mm?area=rel_nino34&base_time=202610010000&type=plumepercentiles).
 2. **Mopani District rainfall.** November to March rainfall over the dryland maize areas
    of the Mopani district comes from ERA5, from 1979 to the present. The link
    between the index and this rainfall is fitted from the historical record, estimate from the ERA5 reanalysis area average.
@@ -149,34 +148,24 @@ figures in your report.
 
 ---
 
-## Tasks
+## Report structure 
 
-| Task | | EGS4030 | EGS5030S |
-|---|---|---|---|
-| 1 | From the ocean to the field | 15 | 12 |
-| 2 | What the historical record shows | 20 | 17 |
-| 3 | From rainfall to yield | 20 | 17 |
-| 4 | The 2026/27 season as a range of outcomes | 30 | 26 |
-| 5 | A note to the director | 15 | 13 |
-| Ext. | Planting date (5030S only) | – | 15 |
-| | **Total** | **100** | **100** |
+| Section | Name | Marks available | words |
+|---|---|---|
+| 1 | Introduction | 20 | 300 words |
+| 2 | Data and methodology | 20 | |
+| 3 | Results - general | 15 |
+| 4 | Results & discussion - 2026/27 | 30 |
+| 5 | Concluding message to the Dept | 15 | 
+| | **Total** | **100** | 
 
 The suggested word counts are guides to the depth expected, not strict limits.
 
-### Task 1: From the ocean to the field (15 marks)
+### Introduction: points to consider
 
-**(a)** In your own words, explain how El Niño conditions in the tropical
-Pacific tend to reduce summer rainfall over north-eastern South Africa. Describe
-the chain of physical processes, drawing on the lecture and the suggested
-reading. Then explain briefly why forecasting centres have started using a
-*relative* Niño 3.4 index rather than the traditional one. (About 300 words.)
+**(a)** Justify briefly why the Department should be considering potential impacts of the developing El Niño conditions in the tropical
+Pacific. In this description, note the observed relationship between Limpopo rainfall and ENSO and the sensitivity of rain-fed maize to climate variability. Explain briefly why it is justified under a climate change regime to prefer a *relative* Niño 3.4 index rather than the traditional one. 
 
-**(b)** Run `fig1_one_season.py`, which compares the 2015/16 season with
-1999/00 by default. You may replace 1999/00 with another season if you prefer.
-For each season, describe when during the growing season the crop was short of
-water, and explain why a shortage around flowering reduced the yield more than
-one earlier in the season. Use the primer above. You do not need the model
-equations. (About 200 words, with Figure 1.)
 
 ### Task 2: What the historical record shows (20 marks)
 
@@ -200,7 +189,14 @@ the use of an average over the whole study area.
 
 (About 400 words in total, with Figure 2.)
 
-### Task 3: From rainfall to yield (20 marks)
+### Results: General
+
+**(b)** Run `fig1_one_season.py`, which compares the 2015/16 season with
+1999/00 by default. You may replace 1999/00 with another season if you prefer.
+For each season, describe when during the growing season the crop was short of
+water, and explain why a shortage around flowering reduced the yield more than
+one earlier in the season.  (About 200 words, with Figure 1.)
+
 
 Run `fig3_rainfall_to_yield.py`.
 
