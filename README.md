@@ -81,9 +81,9 @@ and the choices behind it.
 | ENSO index | DJF relative Niño 3.4 following the C3S definition: the Niño 3.4 SST anomaly minus the 20°S–20°N mean anomaly (both relative to 1993–2016), rescaled month by month to the variability of the traditional index over 1991–2020 | `climate.py` |
 | Local rainfall | November–March ERA5 rainfall over the study area | `climate.py` |
 | ENSO–rainfall link | Least-squares line through the 1979–present seasons, with bootstrap refits for its uncertainty | `climate.py` |
-| Atmospheric demand | Hargreaves–Samani reference evapotranspiration from ERA5 temperature | `weather.py` |
-| Soil water | FAO-56 single crop coefficient root-zone balance, with SCS curve-number runoff | `crop.py` |
-| Yield | FAO-33 stage-weighted yield response to water shortage | `crop.py` |
+| Atmospheric demand | Hargreaves–Samani (Hargreaves & Samani, 1985) reference evapotranspiration from ERA5 temperature | `weather.py` |
+| Soil water | FAO-56 (Allen et al., 1998) single crop coefficient root-zone balance, with SCS curve-number runoff | `crop.py` |
+| Yield | FAO-33 (Doorenbos & Kassam, 1979) stage-weighted yield response to water shortage | `crop.py` |
 | Experiments | Historical runs, the same-rainfall experiment and the uncertainty cascade | `experiment.py` |
 
 Yield is reported as a percentage of the yield with no water shortage. The
