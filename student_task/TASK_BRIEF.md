@@ -150,14 +150,14 @@ figures in your report.
 
 ## Report structure 
 
-| Section | Name | Marks available | words |
-|---|---|---|
+| Section | Name | Marks available | Suggested word count |
+|---|---|---|---|
 | 1 | Introduction | 20 | 300 words |
-| 2 | Data and methodology | 20 | |
-| 3 | Results - general | 15 |
-| 4 | Results & discussion - 2026/27 | 30 |
-| 5 | Concluding message to the Dept | 15 | 
-| | **Total** | **100** | 
+| 2 | Data and methodology | 20 | 300 |
+| 3 | Results - general | 15 |150-200|
+| 4 | Results & discussion - 2026/27 | 30 | 300 - 450 |
+| 5 | Concluding message to the Dept | 15 | 250 |
+| | **Total** | **100** | 1300-1500|
 
 The suggested word counts are guides to the depth expected, not strict limits.
 
