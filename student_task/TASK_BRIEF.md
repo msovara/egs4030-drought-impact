@@ -154,7 +154,7 @@ figures in your report.
 |---|---|---|---|
 | 1 | Introduction | 20 | 300 words |
 | 2 | Data and methodology | 20 | 300 |
-| 3 | Results - general | 15 |150-200|
+| 3 | Results - general | 15 |150 - 200|
 | 4 | Results & discussion - 2026/27 | 30 | 300 - 450 |
 | 5 | Concluding message to the Dept | 15 | 250 |
 | | **Total** | **100** | 1300-1500|
@@ -213,149 +213,99 @@ difference using the timing of rain and dry spells relative to flowering.
 seasonal rainfall forecast, or an ENSO index on its own, to anticipate effects
 on maize?
 
-### Task 4: The 2026/27 season as a range of outcomes (30 marks)
+### Results & Discussion: The 2026/27 season as a range of outcomes 
 
-**(a) Read the forecast.** Open the
+**(1) Read the forecast.** Open the
 [C3S multi-system plume for the relative Niño 3.4 index](https://climate.copernicus.eu/charts/packages/c3s_seasonal/products/c3s_seasonal_plume_mm?area=rel_nino34&base_time=202610010000&type=plumepercentiles),
-initialised on 1 October 2026. Briefly describe what the chart shows: what the
-shaded band represents and where the forecasts come from. Read off the band
-for December, January and February, and take the average of each edge as your
-DJF range. The index in the model is calculated in the same way as the C3S
+initialised on 1 October 2026. Select a chart option that you find best illustrates the range of possible outcomes for the coming season and include this figure in your report.
+Read off the range of plausible and most likely relative Niño 3.4 index values for December, January and February, and consequently propose a range of plausible DJF average index values to use. The index in the model is calculated in the same way as the C3S
 one, with anomalies relative to 1993–2016 and the same scaling, so the two can
-be compared directly. If your range differs from the one the lecturer has
-entered, set `FORECAST_RANGE` at the top of `fig4_cascade.py` to your own
-values and say which you used.
+be compared directly.
 
-**(b) Run the cascade.** Run `fig4_cascade.py`. The figure shows the spread of
+**(2) Run the cascade.** Run `fig4_cascade.py` using the range of values you proposed in (1) above. The figure shows the spread of
 modelled yields as sources of uncertainty are added one at a time:
 
-1. the range of the ENSO forecast;
-2. the uncertain response of Mopani rainfall to ENSO, including the scatter of
+a. the range of the ENSO forecast;
+b. the uncertain response of Mopani rainfall to ENSO, including the scatter of
    real seasons about the fitted line;
-3. the day-to-day sequence of rainfall within the season;
-4. differences in soil and in the crop's sensitivity to water shortage.
+c. the day-to-day sequence of rainfall within the season;
+d. differences in soil and in the crop's sensitivity to water shortage.
 
 The last two boxes are for comparison: the same full calculation for a neutral
 ENSO season, and the model run on the actual seasons since 1979. A "poor"
 season is one in the worst third of the historical seasons.
 
-Describe how the range of outcomes changes at each step, and which step adds
-the most spread. Report the median and the chance of a poor season under the
-forecast, and compare them with the neutral case.
+Describe briefly and simply how the range of outcomes changes at each step, and which step adds
+the most spread. Report the best guess crop outcome and the chance of a poor season under the 2026/27
+forecast, and compare them with the ENSO neutral case.
 
-**(c) How firm are the numbers?** Change `SEED` and run the script again. How
+**(3) EGS5030 extension: How firm are the numbers?** Change `SEED` and run the script again. How
 much do the results change? What does this suggest about how precisely you
 should report them? Then look at the list of past seasons with an index inside
 your forecast range. How many are there, and what does that mean for how far
 the fitted relationship is being stretched?
 
-**(d) The wider cascade.** Uncertainty about local impacts builds up at every
+**(4) The wider cascade.** Uncertainty about local impacts builds up at every
 link in the chain, from the ocean through the regional atmosphere and the
 weather within the season to the soil and the crop. Sketch this cascade (a
 hand-drawn diagram is fine) or describe it in words. Name at least two sources
 of uncertainty the model does *not* include, and say whether you would expect
 each to widen, narrow or shift the range of outcomes.
 
-(About 600 words in total, with Figure 4 and your sketch if you make one.)
+**(5) EGS5030S extension: planting date** Run `fig5_planting_dates.py`, which repeats the full cascade for early (1 November),
+standard (25 November) and late (20 December) planting, under the forecast and
+under a neutral season. Does planting date change the chance of a poor season under the forecast? Is
+  the effect larger or smaller than under neutral conditions?
 
-### Task 5: A note to the director (15 marks)
+### Conclusion
 
-Write a short note (no more than 300 words) answering the director's question
-in plain language for someone who is not a climate scientist. It should say:
+Write a short note (no more than 250 words) on what the above findings mean for the question posed to you at the start; noting your take on:
 
 - whether you would issue a warning, to whom, and how confident you are;
 - what the analysis can and cannot tell the department;
-- what new information over the next two or three months could change your
-  advice.
 
-Use the language of likelihood ("more likely than usual", "about a two in three
-chance") rather than certainty. Round any numbers sensibly.
+Be cautions and don't overstate your results. Round any numbers sensibly.
 
-### Extension for EGS5030S students: planting date (15 marks)
+## Key considerations when marking
 
-Planting date is one of the few decisions a dryland farmer can adjust. Run
-`fig5_planting_dates.py`, which repeats the full cascade for early (1 November),
-standard (25 November) and late (20 December) planting, under the forecast and
-under a neutral season.
-
-- Does planting date change the chance of a poor season under the forecast? Is
-  the effect larger or smaller than under neutral conditions?
-- Explain the result using where flowering falls in each case relative to the
-  rainfall season and to typical dry spells. Figure 1, run with a different
-  `PLANTING`, may help.
-- Discuss whether this could be turned into practical advice, bearing in mind
-  that planting in practice depends on the onset of the rains, seed and labour,
-  and on things the model leaves out.
-
-(About 500 words, with Figure 5.)
-
----
-
-## What to submit
-
-- **One PDF report.** About 1 500 words of text for EGS4030 and about 2 000 for
-  EGS5030S, plus figures. Number your answers to match the tasks.
-- **Your code.** Any template scripts you changed, and a short list of the
-  commands you ran to produce each figure, so that someone else could repeat
-  your results.
-
-## What the marking looks for
-
-- **Explanation of mechanisms.** For example, "yield fell mainly because a
-  three-week dry spell coincided with flowering, after the soil water had
-  already dropped below the stress threshold" shows more understanding than
-  "yield fell because rainfall was low".
-- **Evidence from your own runs.** Figures and numbers you produced, rather than
-  screenshots of the dashboard.
+- **Explanation of mechanisms.** 
+- **Evidence from your own runs.** Figures and numbers you produced
 - **Honesty about uncertainty.** A clear statement of what the analysis cannot
   conclude is worth more than a confident claim it cannot support.
 - **Sensible precision.** Modelled yields reported to the nearest 5 or 10%,
   and no more decimal places than the evidence supports.
-- **Clear writing.** Especially in Task 5.
-
-Common pitfalls are presenting the cascade as a forecast of the 2026/27
-harvest, treating the modelled percentages as tonnes per hectare, and reading
-too much into a handful of strong El Niño seasons.
 
 ---
 
 ## A note on the model's limits
 
-The model deliberately leaves out a great deal: nutrients, pests and diseases,
+The model deliberately leaves out a lot: nutrients, pests and diseases,
 weeds, differences in soil and rainfall across the district, irrigation, and
-nearly all farmer decisions. In southern Africa, yields on smallholder farms are
-often limited more by nitrogen and management than by water. The relationship
+nearly all farmer decisions. The relationship
 between ENSO and rainfall is a straight line fitted to fewer than fifty seasons,
 and ERA5 rainfall has its own errors.
 
-None of this makes the exercise pointless. Working out what a simple model can
+It doesn't mean the model is useless, but it is limited. Working out what a simple model can
 and cannot tell you is a large part of impact modelling in practice.
 
 ---
 
 ## Suggested reading
 
-- Lindesay, J.A. (1988). South African rainfall, the Southern Oscillation and a
-  Southern Hemisphere semi-annual cycle. *Journal of Climatology*, 8(1), 17–30.
-- Reason, C.J.C. and Jagadheesha, D. (2005). A model investigation of recent
-  ENSO impacts over southern Africa. *Meteorology and Atmospheric Physics*, 89,
-  181–205.
 - Hoell, A., Funk, C., Magadzire, T., Zinke, J. and Husak, G. (2015). El
   Niño–Southern Oscillation diversity and Southern Africa teleconnections during
-  austral summer. *Climate Dynamics*, 45, 1583–1599.
+  austral summer. *Climate Dynamics*, 45, 1583–1599. {doi.org/10.1007/s00382-014-2414-z}
 - Archer, E.R.M., Landman, W.A., Tadross, M.A., Malherbe, J., Weepener, H.,
   Maluleke, P. and Marumbwa, F.M. (2017). Understanding the evolution of the
   2014–2016 summer rainfall seasons in southern Africa: key lessons. *Climate
-  Risk Management*, 16, 22–28.
-- van Oldenborgh, G.J., Hendon, H., Stockdale, T., L'Heureux, M., Coughlan de
+  Risk Management*, 16, 22–28. {https://doi.org/10.1016/j.crm.2017.03.006}
+- Van Oldenborgh, G.J., Hendon, H., Stockdale, T., L'Heureux, M., Coughlan de
   Perez, E., Singh, R. and van Aalst, M. (2021). Defining El Niño indices in a
   warming climate. *Environmental Research Letters*, 16(4), 044003.
+-  Gillian Kay et al 2026 Environ. Res. Lett. 21 124001. DOI:{doi.org/10.1088/1748-9326/ae7587}
 - L'Heureux, M.L., Tippett, M.K., Wheeler, M.C., Nguyen, H., Narsey, S.,
   Johnson, N., Hu, Z.-Z., Watkins, A.B., Lucas, C., Ganter, C., Becker, E.,
   Wang, W. and Di Liberto, T. (2024). A relative sea surface temperature index
   for classifying ENSO events in a changing climate. *Journal of Climate*,
   37(4), 1197–1211.
-- For the crop water balance, if you want more detail: Allen, R.G., Pereira,
-  L.S., Raes, D. and Smith, M. (1998). *Crop evapotranspiration: guidelines for
-  computing crop water requirements*. FAO Irrigation and Drainage Paper 56.
-  Chapters 1 and 8 are the most relevant.
+
