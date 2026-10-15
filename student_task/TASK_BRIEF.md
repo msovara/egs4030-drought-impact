@@ -33,7 +33,7 @@ comes from.
 The model follows a chain of steps from the Pacific Ocean to the crop:
 
 1. **The ENSO index.** The state of El Niño-Southern Oscillation (ENSO) is summarised by the relative Niño 3.4
-   index (see [the Copernicus discussion on using a relative Niño index] (https://doi.org/10.21957/d05ccfe150)), averaged over December to February (DJF). It is calculated from ERA5
+   index (see [the Copernicus discussion on using a relative Niño index](https://doi.org/10.21957/d05ccfe150)), averaged over December to February (DJF). It is calculated from ERA5
    sea surface temperatures in the same way as the index in the [C3S seasonal forecast plots](https://climate.copernicus.eu/charts/packages/c3s_seasonal/products/c3s_seasonal_plume_mm?area=rel_nino34&base_time=202610010000&type=plumepercentiles).
 2. **Mopani District rainfall.** November to March rainfall over the dryland maize areas
    of the Mopani district comes from ERA5, from 1979 to the present. The link
