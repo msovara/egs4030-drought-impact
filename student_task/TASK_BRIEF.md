@@ -215,14 +215,14 @@ on maize?
 
 ### Results & Discussion: The 2026/27 season as a range of outcomes 
 
-**(1) Read the forecast.** Open the
+**(4.1) Read the forecast.** Open the
 [C3S multi-system plume for the relative Niño 3.4 index](https://climate.copernicus.eu/charts/packages/c3s_seasonal/products/c3s_seasonal_plume_mm?area=rel_nino34&base_time=202610010000&type=plumepercentiles),
 initialised on 1 October 2026. Select a chart option that you find best illustrates the range of possible outcomes for the coming season and include this figure in your report.
 Read off the range of plausible and most likely relative Niño 3.4 index values for December, January and February, and consequently propose a range of plausible DJF average index values to use. The index in the model is calculated in the same way as the C3S
 one, with anomalies relative to 1993–2016 and the same scaling, so the two can
 be compared directly.
 
-**(2) Run the cascade.** Run `fig4_cascade.py` using the range of values you proposed in (1) above. The figure shows the spread of
+**(4.2) Run the cascade.** Run `fig4_cascade.py` using the range of values you proposed in (1) above. The figure shows the spread of
 modelled yields as sources of uncertainty are added one at a time:
 
 a. the range of the ENSO forecast;
@@ -239,20 +239,20 @@ Describe briefly and simply how the range of outcomes changes at each step, and 
 the most spread. Report the best guess crop outcome and the chance of a poor season under the 2026/27
 forecast, and compare them with the ENSO neutral case.
 
-**(3) EGS5030 extension: How firm are the numbers?** Change `SEED` and run the script again. How
+**(4.3) EGS5030 extension: How firm are the numbers?** Change `SEED` and run the script again. How
 much do the results change? What does this suggest about how precisely you
 should report them? Then look at the list of past seasons with an index inside
 your forecast range. How many are there, and what does that mean for how far
 the fitted relationship is being stretched?
 
-**(4) The wider cascade.** Uncertainty about local impacts builds up at every
+**(4.4) The wider cascade.** Uncertainty about local impacts builds up at every
 link in the chain, from the ocean through the regional atmosphere and the
 weather within the season to the soil and the crop. Sketch this cascade (a
 hand-drawn diagram is fine) or describe it in words. Name at least two sources
 of uncertainty the model does *not* include, and say whether you would expect
 each to widen, narrow or shift the range of outcomes.
 
-**(5) EGS5030S extension: planting date** Run `fig5_planting_dates.py`, which repeats the full cascade for early (1 November),
+**(4.5) EGS5030S extension: planting date** Run `fig5_planting_dates.py`, which repeats the full cascade for early (1 November),
 standard (25 November) and late (20 December) planting, under the forecast and
 under a neutral season. Does planting date change the chance of a poor season under the forecast? Is
   the effect larger or smaller than under neutral conditions?
