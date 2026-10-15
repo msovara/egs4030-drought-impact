@@ -6,15 +6,16 @@
 
 **Submission:** one PDF report with your code 
 
+**DUE** With portfolio submission (no feedback submission for this task)
+
 ---
 
 ## The situation
 
 It is mid-October 2026. A strong El Niño is developing in the tropical
-Pacific, starting in June 2026, and the seasonal forecasts from all major seasonal forecasting
-centres suggest it will reach or approach record strength by the start of 2026/27 Austral summer. In the
-summer-rainfall region of South Africa, maize planting will start within the
-next few weeks.
+Pacific. It started already in June 2026.  The seasonal forecasts from all major seasonal forecasting
+centres suggest it will reach or approach record strength by the start of 2026/27 Austral (Southern Hemisphere) summer. In the
+summer-rainfall region of South Africa, maize planting generally occurs between late October and mid-December.
 
 Imagine you are asked by the Limpopo Department of Agriculture and Land Reform:
 
@@ -22,8 +23,7 @@ Imagine you are asked by the Limpopo Department of Agriculture and Land Reform:
 > coming season, and if so, how confidently?*
 
 In this assignment you use a simple crop model to work towards an answer. The
-aim is not a single prediction of the harvest. It is a sensible range of
-plausible outcomes, and an understanding of where the uncertainty in that range
+aim is to propose a reasonable range of plausible outcomes, and to demonstrate an understanding of where the uncertainty in that range
 comes from.
 
 ---
