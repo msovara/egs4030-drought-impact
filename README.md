@@ -1,4 +1,4 @@
-# ENSO and maize in the Mopani district
+# From the ocean to the maize field
 
 A small crop water-balance model for the EGS4030/5030S guest lecture on climate
 impact modelling at the University of Cape Town (19 October 2026), and the
@@ -40,6 +40,10 @@ The figure templates for the assignment are in `student_task/templates/`, and
 `requirements.txt` is kept for the hosted copy of the dashboard on Streamlit
 Community Cloud. It installs only what the dashboard needs.
 
+### Running it without installing anything
+
+The dashboard is hosted at https://msovara-egs4030-drought-impact-app-ylw3zh.streamlit.app/, so students whose Python breaks during the practical can still take part. Use the Live app badge above. You can also deploy your own copy from this repo with app.py as the main module.
+
 ---
 
 ## Data
@@ -77,9 +81,9 @@ and the choices behind it.
 | ENSO index | DJF relative Niño 3.4 following the C3S definition: the Niño 3.4 SST anomaly minus the 20°S–20°N mean anomaly (both relative to 1993–2016), rescaled month by month to the variability of the traditional index over 1991–2020 | `climate.py` |
 | Local rainfall | November–March ERA5 rainfall over the study area | `climate.py` |
 | ENSO–rainfall link | Least-squares line through the 1979–present seasons, with bootstrap refits for its uncertainty | `climate.py` |
-| Atmospheric demand | Hargreaves–Samani reference evapotranspiration from ERA5 temperature | `weather.py` |
-| Soil water | FAO-56 single crop coefficient root-zone balance, with SCS curve-number runoff | `crop.py` |
-| Yield | FAO-33 stage-weighted yield response to water shortage | `crop.py` |
+| Atmospheric demand | Hargreaves–Samani (Hargreaves & Samani, 1985) reference evapotranspiration from ERA5 temperature | `weather.py` |
+| Soil water | FAO-56 (Allen et al., 1998) single crop coefficient root-zone balance, with SCS curve-number runoff | `crop.py` |
+| Yield | FAO-33 (Doorenbos & Kassam, 1979) stage-weighted yield response to water shortage | `crop.py` |
 | Experiments | Historical runs, the same-rainfall experiment and the uncertainty cascade | `experiment.py` |
 
 Yield is reported as a percentage of the yield with no water shortage. The
@@ -88,8 +92,9 @@ something this model can supply.
 
 ### The season ahead
 
-For the forward experiment the model does not generate synthetic weather.
-Instead, for each ensemble member it:
+NOAA CPC's advisory of 8 October 2026 had Niño 3.4 at +2.1 °C, with a strong-to-very strong event likely through January–March 2027 and an 83% chance that October–December exceeds any event since 1950. The three closest analogues in the observed record — 1982/83, 1997/98 and 2015/16 — are the seasons of the best-documented southern African crop failures.
+
+For the forward experiment, for each ensemble member it:
 
 1. draws a DJF index value from the forecast range;
 2. turns it into a November–March rainfall total using the fitted line (and, from
@@ -137,7 +142,7 @@ The tabs follow the order of the assignment.
 1. **One season.** Pick a past season and watch the root-zone water fall through
    the stress threshold. The growth stages are shaded, so it is easy to see
    whether a dry spell fell during flowering. 2015/16 is a useful starting
-   point.
+   point. Finish on the stage table, which shows exactly where the yield went.
 2. **Same rain, different harvests.** Every past season is given the same
    November–March total, keeping its own timing. The spread of yields comes
    from timing alone.
@@ -152,13 +157,14 @@ A possible outline for the session, to adjust as needed:
 
 | Time | Content |
 |---|---|
-| 0:00–0:25 | What an impact model is, and how it differs from a climate model |
-| 0:25–0:45 | How El Niño reaches southern African rainfall |
-| 0:45–1:05 | The soil water bucket and why flowering matters (Tabs 1, 2 and 5) |
-| 1:05–1:15 | Break |
-| 1:15–1:35 | The historical record and the relative Niño 3.4 index (Tab 3) |
-| 1:35–1:55 | The coming season and the uncertainty cascade (Tab 4) |
-| 1:55–2:10 | The assignment, and getting everyone's environment working |
+| 0:00–0:25 | What is an impact model, and how does it differ from a climate model |
+| 0:25–0:45 | The equations, on the board, using Tab 5 |
+| 0:45–1:15 | Live demonstration, Tabs 1 and 2 |
+| 1:15–1:30 | Break |
+| 1:30–1:45 | Tab 3, ENSO, rainfall and maize in Limpopo |
+| 1:45–2:00 | Tab 4: The season ahead |
+| 2:00–2:10 | Tab 6: WRF-Hydro and the cluster fit |
+| 2:10–2:30 | The assignment, and getting everyone running |
 
 ---
 
