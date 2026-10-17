@@ -19,14 +19,14 @@ from impact_model.config import PLANTING_DATES
 from impact_model.experiment import run_cascade
 
 # --- Things you can change -------------------------------------------------
-FORECAST_RANGE = None        # (low, high) in degC, or None for the lecturer's range
+FORECAST_RANGE = None        # (low, high) in degC
 MEMBERS = 500
 SOIL = "sandy_loam"
 SEED = 2026
 FILENAME = "fig5_planting_dates.png"
 # ---------------------------------------------------------------------------
 
-index_range = FORECAST_RANGE or forecast_djf_range()
+index_range = FORECAST_RANGE #or forecast_djf_range()
 if index_range is None:
     raise SystemExit("Set FORECAST_RANGE at the top of this file.")
 

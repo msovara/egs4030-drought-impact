@@ -20,7 +20,6 @@ from impact_model.experiment import CASCADE_STAGES, run_cascade
 
 # --- Things you can change -------------------------------------------------
 # The DJF range you read from the C3S plume, in degC, as (low, high).
-# None uses the range entered by the lecturer in impact_model/climate.py.
 FORECAST_RANGE = None
 MEMBERS = 500                # ensemble members per box
 SOIL = "sandy_loam"
@@ -29,7 +28,7 @@ SEED = 2026                  # change to check how much the answer depends on ch
 FILENAME = "fig4_cascade.png"
 # ---------------------------------------------------------------------------
 
-index_range = FORECAST_RANGE or forecast_djf_range()
+index_range = FORECAST_RANGE# or forecast_djf_range()
 if index_range is None:
     raise SystemExit("Set FORECAST_RANGE at the top of this file to the DJF range you read from the C3S chart.")
 
