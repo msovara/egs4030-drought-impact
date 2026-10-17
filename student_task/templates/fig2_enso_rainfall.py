@@ -42,7 +42,7 @@ for season, row in record.iterrows():
                     fontsize=7, xytext=(3, 3), textcoords="offset points")
 ax.set_xlabel("DJF relative Nino 3.4 (°C)")
 ax.set_ylabel("Nov-Mar rainfall (mm)")
-ax.set_title(r"R^2 = f"{fit.r**2:.2f}, p = {fit.p_value:.5f}, slope {fit.slope:+.0f} mm per °C")
+ax.set_title(r"R^2 = f"{(fit.r)**2:.2f}, p = {fit.p_value:.5f}, slope {fit.slope:+.0f} mm per °C")
 ax.legend(fontsize=8)
 
 anomaly = record["rainfall"] - record["rainfall"].mean()
