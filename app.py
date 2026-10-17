@@ -568,28 +568,134 @@ days of light rain, which affects dry-spell statistics.
 **The relative Niño 3.4 index.** The Niño 3.4 SST anomaly (5°S–5°N, 170°W–120°W) minus the
 anomaly of the whole 20°S–20°N band, both relative to {INDEX_BASE_PERIOD[0]}–{INDEX_BASE_PERIOD[1]}.
 Following the C3S definition, the difference is then rescaled for each calendar month so that it
-varies by as much as the traditional index did over {INDEX_SCALING_PERIOD[0]}–{INDEX_SCALING_PERIOD[1]}.
+varies by as much as the traditional index did over {INDEX_SCALING_PERIOD[0]}–{INDEX_SCALING_PERIOD[1]}:
+"""
+    )
+    st.latex(
+        r"I_\mathrm{rel}(y, m) = \frac{\sigma_m\!\left(S'_{3.4}\right)}"
+        r"{\sigma_m\!\left(S'_{3.4} - S'_\mathrm{trop}\right)}"
+        r"\left[ S'_{3.4}(y, m) - S'_\mathrm{trop}(y, m) \right]"
+    )
+    st.markdown(
+        f"where $S'_{{3.4}}$ and $S'_\\mathrm{{trop}}$ are the Niño 3.4 and tropical-mean SST "
+        f"anomalies in year $y$ and calendar month $m$, and $\\sigma_m$ is the standard deviation "
+        f"of a month's values over {INDEX_SCALING_PERIOD[0]}–{INDEX_SCALING_PERIOD[1]}. The DJF "
+        "index is the mean of the December, January and February values. Its link with rainfall "
+        "is a straight line fitted to the seasons since 1979,"
+    )
+    st.latex(r"P_\mathrm{NDJFM} = a + b \, I_\mathrm{rel,DJF} + \varepsilon")
+    st.markdown(
+        "where $P_\\mathrm{NDJFM}$ is November–March rainfall, $a$ and $b$ are fitted, and "
+        "$\\varepsilon$ is the part of each season's rainfall that ENSO does not explain."
+    )
 
-**Atmospheric demand.** Reference evapotranspiration from temperature and latitude
-(Hargreaves and Samani, 1985).
+    st.markdown(
+        "**Atmospheric demand.** Reference evapotranspiration from temperature and latitude "
+        "(Hargreaves and Samani, 1985):"
+    )
+    st.latex(
+        r"\mathrm{ET}_0 = 0.0023 \times 0.408 \, R_\mathrm{a}"
+        r"\left( T_\mathrm{mean} + 17.8 \right) \sqrt{T_\mathrm{max} - T_\mathrm{min}}"
+    )
+    st.markdown(
+        "where $\\mathrm{ET}_0$ is in mm d$^{-1}$, temperatures are in °C, $R_\\mathrm{a}$ is "
+        "the extraterrestrial radiation in MJ m$^{-2}$ d$^{-1}$, and the factor 0.408 converts "
+        "that radiation into an equivalent depth of evaporated water."
+    )
 
+    st.markdown(
+        f"""
 **Soil water.** A single root-zone "bucket" following FAO-56 (Allen et al., 1998). Rain fills
 it (less runoff, by the SCS curve number method), the crop draws it down, and water above
 field capacity drains away. The bucket deepens as the roots grow. Once more than a fraction p
 = {MAIZE.depletion_fraction} of the available water has been used, the crop can no longer
 draw water fast enough and its water use falls below demand.
 
-**Yield.** In each growth stage the relative shortfall in water use is multiplied by a yield
-response factor Ky (FAO-33; Doorenbos and Kassam, 1979), and the stage effects are multiplied
-together. Yield is reported as a percentage of the yield with no water shortage.
+The state variable is the root-zone depletion $D_\\mathrm{{r}}$ (mm below field capacity),
+updated each day $i$ from rainfall $P$, runoff $\\mathrm{{RO}}$, actual evapotranspiration
+$\\mathrm{{ET}}_\\mathrm{{a}}$ and deep percolation $\\mathrm{{DP}}$:
 """
     )
-    params = pd.DataFrame({
-        "Stage": [STAGE_LABELS[s] for s in STAGE_ORDER],
-        "Days": [MAIZE.stage_lengths[s] for s in STAGE_ORDER],
-        "Ky": [MAIZE.ky_by_stage[s] for s in STAGE_ORDER],
-    })
-    show_table(params, formats={"Ky": "{:.1f}"})
+    st.latex(
+        r"D_{\mathrm{r},i} = D_{\mathrm{r},i-1} - \left( P_i - \mathrm{RO}_i \right)"
+        r" + \mathrm{ET}_{\mathrm{a},i} + \mathrm{DP}_i , \qquad "
+        r"D_{\mathrm{r},i} \ge 0"
+    )
+    st.markdown(
+        "Deep percolation is whatever would take $D_\\mathrm{r}$ below zero. Runoff is "
+        "estimated from the soil's curve number $\\mathrm{CN}$:"
+    )
+    st.latex(
+        r"\mathrm{RO}_i = \begin{cases} \dfrac{\left( P_i - 0.2\,S \right)^2}{P_i + 0.8\,S}, "
+        r"& P_i > 0.2\,S \\[1ex] 0, & \text{otherwise} \end{cases} \qquad "
+        r"S = \frac{25\,400}{\mathrm{CN}} - 254"
+    )
+    st.markdown(
+        "with $P$, $\\mathrm{RO}$ and the retention parameter $S$ in mm. The size of the bucket "
+        "is the total available water, and the stress threshold is a fraction $p$ of it:"
+    )
+    st.latex(
+        r"\mathrm{TAW} = 1000 \left( \theta_\mathrm{FC} - \theta_\mathrm{WP} \right) Z_\mathrm{r}, "
+        r"\qquad \mathrm{RAW} = p \, \mathrm{TAW}"
+    )
+    st.markdown(
+        "where $\\theta_\\mathrm{FC}$ and $\\theta_\\mathrm{WP}$ are the volumetric water "
+        "contents at field capacity and wilting point and $Z_\\mathrm{r}$ is the rooting depth "
+        "in metres. Soil newly reached by the growing roots is assumed to be at field capacity, "
+        "so root growth enlarges $\\mathrm{TAW}$ without changing $D_\\mathrm{r}$. The crop's "
+        "water demand follows the crop coefficient $K_\\mathrm{c}$, and once depletion passes "
+        "$\\mathrm{RAW}$ the stress coefficient $K_\\mathrm{s}$ reduces actual water use below it:"
+    )
+    st.latex(
+        r"\mathrm{ET}_\mathrm{c} = K_\mathrm{c} \, \mathrm{ET}_0, \qquad "
+        r"K_\mathrm{s} = \begin{cases} 1, & D_\mathrm{r} \le \mathrm{RAW} \\[1ex] "
+        r"\dfrac{\mathrm{TAW} - D_\mathrm{r}}{\mathrm{TAW} - \mathrm{RAW}}, "
+        r"& D_\mathrm{r} > \mathrm{RAW} \end{cases}, \qquad "
+        r"\mathrm{ET}_\mathrm{a} = K_\mathrm{s} \, \mathrm{ET}_\mathrm{c}"
+    )
+    st.markdown(
+        "Actual water use is also capped at the water left in the profile that day."
+    )
+
+    st.markdown(
+        "**Yield.** In each growth stage $s$ the relative shortfall in water use is multiplied "
+        "by a yield response factor $K_{\\mathrm{y},s}$ (FAO-33; Doorenbos and Kassam, 1979), "
+        "and the stage effects are multiplied together:"
+    )
+    st.latex(
+        r"\frac{Y_\mathrm{a}}{Y_\mathrm{m}} = \prod_{s} \max \left[ 0, \; 1 - K_{\mathrm{y},s}"
+        r"\left( 1 - \frac{\mathrm{ET}_{\mathrm{a},s}}{\mathrm{ET}_{\mathrm{c},s}} \right) \right]"
+    )
+    st.markdown(
+        "where $\\mathrm{ET}_{\\mathrm{a},s}$ and $\\mathrm{ET}_{\\mathrm{c},s}$ are totals over "
+        "stage $s$, and $Y_\\mathrm{a}/Y_\\mathrm{m}$ is the yield as a fraction of the yield with "
+        "no water shortage, which is how results are reported. The stage-dependent "
+        "$K_\\mathrm{y}$ is what makes timing matter. For maize it is 1.5 during flowering and "
+        "grain fill against 0.4 during vegetative growth, so the same relative shortfall costs "
+        "nearly four times as much yield if it falls during flowering."
+    )
+
+    left, right = st.columns(2)
+    with left:
+        st.markdown("**Crop stages**")
+        params = pd.DataFrame({
+            "Stage": [STAGE_LABELS[s] for s in STAGE_ORDER],
+            "Days": [MAIZE.stage_lengths[s] for s in STAGE_ORDER],
+            "Ky": [MAIZE.ky_by_stage[s] for s in STAGE_ORDER],
+        })
+        show_table(params, formats={"Ky": "{:.1f}"})
+    with right:
+        st.markdown("**Soils**")
+        soils = pd.DataFrame({
+            "Soil": [soil.name for soil in SOILS.values()],
+            "θ at field capacity": [soil.field_capacity for soil in SOILS.values()],
+            "θ at wilting point": [soil.wilting_point for soil in SOILS.values()],
+            "Available water (mm/m)": [soil.available_water_capacity for soil in SOILS.values()],
+            "Curve number": [soil.curve_number for soil in SOILS.values()],
+        })
+        show_table(soils, formats={"θ at field capacity": "{:.2f}", "θ at wilting point": "{:.2f}",
+                                   "Available water (mm/m)": "{:.0f}", "Curve number": "{:.0f}"})
+
     st.markdown(
         """
 **Not included.** Nutrients, pests and diseases, weeds, farmer decisions other than planting
