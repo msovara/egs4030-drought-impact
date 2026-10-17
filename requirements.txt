@@ -1,5 +1,5 @@
-# Packages for the hosted dashboard on Streamlit Community Cloud.
-# For the practical itself, use the conda environment in environment.yml.
+# Dashboard and the figure templates.
+# The conda environment in environment.yml is the same set, plus cartopy.
 
 numpy>=1.24,<3
 pandas>=2.0,<3
@@ -8,6 +8,7 @@ xarray>=2023.6
 netCDF4>=1.6
 streamlit>=1.30
 plotly>=5.18
+matplotlib>=3.8
 
 # pandas Styler (used for the formatted tables) needs jinja2.
 jinja2>=3.1

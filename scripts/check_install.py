@@ -94,8 +94,11 @@ started = time.perf_counter()
 section("Environment")
 print(f"  info  Python {sys.version.split()[0]} at {sys.executable}")
 active_env = os.environ.get("CONDA_DEFAULT_ENV")
+in_venv = sys.prefix != sys.base_prefix or bool(os.environ.get("VIRTUAL_ENV"))
 if active_env == CONDA_ENV_NAME:
     print(f"  ok    conda environment '{active_env}' is active")
+elif in_venv:
+    print("  ok    running inside a virtual environment (pip install is fine)")
 elif active_env:
     warn(f"conda environment '{active_env}' is active, not '{CONDA_ENV_NAME}'. "
          f"Run 'conda activate {CONDA_ENV_NAME}' first")

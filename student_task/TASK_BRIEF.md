@@ -106,6 +106,8 @@ cd egs4030-drought-impact
 conda env create -f environment.yml
 ```
 
+If `environment.yml` is not in that folder, the clone is on the old branch. Run `git checkout stefaantask` and try again.
+
 Then, at the start of each session:
 
 ```bash
@@ -142,9 +144,16 @@ python student_task/templates/fig5_planting_dates.py   # 5030S extension
 For a quick text summary, `python scripts/run_demo.py --help` lists some
 command-line views.
 
-If your environment will not build, the hosted dashboard lets you follow the
-practical in the meantime. You will still need a working environment for the
-figures in your report.
+If conda will not build, install with pip instead and carry on. From the
+repository root, with a virtual environment activated:
+
+```bash
+python -m pip install -r requirements.txt
+python scripts/check_install.py
+python -m streamlit run app.py
+```
+
+That is enough for the dashboard and the figure templates.
 
 ---
 

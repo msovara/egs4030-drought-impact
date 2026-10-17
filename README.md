@@ -25,24 +25,56 @@ The student brief is in [`student_task/TASK_BRIEF.md`](student_task/TASK_BRIEF.m
 
 ## Getting started
 
-The practical assumes WSL with miniforge. From the repository root:
+Clone the repository and work from its root. The ERA5 files are already in
+`data/`. No Copernicus account and no API key.
 
 ```bash
-conda env create -f environment.yml      # once
-conda activate impact
-python scripts/check_install.py          # a few seconds; ends with a single ready / not ready line
-streamlit run app.py                     # the dashboard, at http://localhost:8501
+git clone https://github.com/msovara/egs4030-drought-impact.git
+cd egs4030-drought-impact
 ```
 
-The figure templates for the assignment are in `student_task/templates/`, and
-`python scripts/run_demo.py --help` lists some text-only views.
+### Dashboard on any laptop
 
-`requirements.txt` is kept for the hosted copy of the dashboard on Streamlit
-Community Cloud. It installs only what the dashboard needs.
+Same shape as a normal Python project: a virtual environment, then one install
+file, then the app.
 
-### Running it without installing anything
+```bash
+python -m venv .venv
+```
 
-The dashboard is hosted at https://msovara-egs4030-drought-impact-app-ylw3zh.streamlit.app/, so students whose Python breaks during the practical can still take part. Use the Live app badge above. You can also deploy your own copy from this repo with app.py as the main module.
+Activate it (`source .venv/bin/activate` on macOS or Linux, `.venv\Scripts\activate` on Windows), then:
+
+```bash
+python -m pip install -r requirements.txt
+python scripts/check_install.py
+python -m streamlit run app.py
+```
+
+The dashboard opens at <http://localhost:8501>. `check_install.py` takes a few
+seconds and ends with one line saying whether the machine is ready.
+
+`requirements.txt` is enough for the dashboard and for the figure templates.
+It is also what a hosted copy of this branch would install.
+
+### The practical environment (WSL and miniforge)
+
+The class machines already use conda. That path installs the same packages,
+plus cartopy if you want maps:
+
+```bash
+conda env create -f environment.yml
+conda activate impact
+python scripts/check_install.py
+streamlit run app.py
+```
+
+Figure templates are in `student_task/templates/`. `python scripts/run_demo.py --help`
+lists text-only views.
+
+A `FAIL` from `check_install.py` means the model will not run. A `WARN` means
+it still runs; the message says what is missing. The warning that
+`C3S_FORECAST` is empty is expected: Tab 4 asks you to type the DJF range from
+the C3S chart.
 
 ---
 
