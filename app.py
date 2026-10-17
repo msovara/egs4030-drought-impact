@@ -599,7 +599,7 @@ varies by as much as the traditional index did over {INDEX_SCALING_PERIOD[0]}–
     )
     st.markdown(
         "where $\\mathrm{ET}_0$ is in mm d$^{-1}$, temperatures are in °C, $R_\\mathrm{a}$ is "
-        "the extraterrestrial radiation in MJ m$^{-2}$ d$^{-1}$, and the factor 0.408 converts "
+        "the solar radiation at the top of the atmosphere in MJ m$^{-2}$ d$^{-1}$, and the factor 0.408 converts "
         "that radiation into an equivalent depth of evaporated water."
     )
 
