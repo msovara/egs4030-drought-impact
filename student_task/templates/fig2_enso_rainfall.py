@@ -40,9 +40,9 @@ for season, row in record.iterrows():
     if LABEL_SEASONS == "all" or row["phase"] == LABEL_SEASONS:
         ax.annotate(_setup.season_label(season), (row["relative"], row["rainfall"]),
                     fontsize=7, xytext=(3, 3), textcoords="offset points")
-ax.set_xlabel("DJF relative Nino 3.4 (degC)")
+ax.set_xlabel("DJF relative Nino 3.4 (°C)")
 ax.set_ylabel("Nov-Mar rainfall (mm)")
-ax.set_title(f"r = {fit.r:.2f}, p = {fit.p_value:.5f}, slope {fit.slope:+.0f} mm per C")
+ax.set_title(f"r = {fit.r:.2f}, p = {fit.p_value:.5f}, slope {fit.slope:+.0f} mm per °C")
 ax.legend(fontsize=8)
 
 anomaly = record["rainfall"] - record["rainfall"].mean()
@@ -52,7 +52,7 @@ twin = ax_time.twinx()
 twin.plot(record.index, record["relative"], color="k", marker="o", ms=3, lw=1)
 twin.axhline(0.5, color=_setup.PHASE_COLOURS["El Nino"], ls="--", lw=0.8)
 twin.axhline(-0.5, color=_setup.PHASE_COLOURS["La Nina"], ls="--", lw=0.8)
-twin.set_ylabel("DJF relative Nino 3.4 (degC, black line)")
+twin.set_ylabel("DJF relative Nino 3.4 (°C, black line)")
 twin.invert_yaxis()   # inverted so that El Nino and below-average rain both point down
 ax_time.set_xlabel("Season (planting year)")
 ax_time.set_title("Through time (index axis inverted)")
