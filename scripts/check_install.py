@@ -287,7 +287,7 @@ section("Uncertainty cascade")
 try:
     forecast = forecast_djf_range()
     if forecast is None:
-        warn("C3S_FORECAST in impact_model/climate.py has not been filled in; "
+        info("C3S_FORECAST in impact_model/climate.py to be filled in in `impact_model/climate.py`; "
              "checking with a placeholder range of 1.0 to 2.0 degC")
         test_range = (1.0, 2.0)
     else:
