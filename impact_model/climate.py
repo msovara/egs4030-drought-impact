@@ -309,8 +309,8 @@ class TeleconnectionFit:
         low, high = self.slope_interval()
         return (
             f"{self.slope:+.0f} mm per degC ({self.slope_percent:+.0f}% of the mean), "
-            f"90% range {low:+.0f} to {high:+.0f}; r = {self.r:.2f}, "
-            f"r2 = {self.r_squared:.2f}, p = {self.p_value:.3f}, n = {self.n}"
+            f"95% confidence interval {low:+.0f} to {high:+.0f}; r = {self.r:.2f}, "
+            f"r2 = {self.r_squared:.2f}, p = {self.p_value:.5f}, n = {self.n}"
         )
 
 
