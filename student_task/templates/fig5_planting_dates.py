@@ -19,7 +19,7 @@ from impact_model.config import PLANTING_DATES
 from impact_model.experiment import run_cascade
 
 # --- Things you can change -------------------------------------------------
-FORECAST_RANGE = None        # (low, high) in degC, or None for the lecturer's range
+FORECAST_RANGE = None        # (low, high) in degC
 MEMBERS = 500
 SOIL = "sandy_loam"
 SEED = 2026
