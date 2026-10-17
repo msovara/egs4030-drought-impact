@@ -26,7 +26,7 @@ SEED = 2026
 FILENAME = "fig5_planting_dates.png"
 # ---------------------------------------------------------------------------
 
-index_range = FORECAST_RANGE or forecast_djf_range()
+index_range = FORECAST_RANGE #or forecast_djf_range()
 if index_range is None:
     raise SystemExit("Set FORECAST_RANGE at the top of this file.")
 
