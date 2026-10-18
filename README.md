@@ -100,10 +100,7 @@ and the choices behind it.
 ### Before each teaching season
 
 1. Refresh the ERA5 files so that they include the most recent season.
-2. Enter the DJF range from the latest C3S relative Niño 3.4 forecast in
-   `C3S_FORECAST` in `impact_model/climate.py`. Until this is filled in,
-   `check_install.py` gives a warning and the forecast tab asks for the values.
-3. Run `check_install.py` and look at its summary of the fitted ENSO–rainfall
+2. Run `check_install.py` and look at its summary of the fitted ENSO–rainfall
    relationship. If the slope is not negative, check the study area and the
    index before teaching with it.
 
