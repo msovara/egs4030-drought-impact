@@ -283,10 +283,10 @@ with tab_season:
     for stage in STAGE_ORDER:
         days = daily.index[daily["stage"] == stage]
         for row in (1, 2, 3):
+            label = {"annotation_text": STAGE_LABELS[stage], "annotation_position": "top left",
+                     "annotation_font_size": 10} if row == 1 else {}
             figure.add_vrect(x0=days[0], x1=days[-1], fillcolor=STAGE_COLOURS[stage], opacity=0.15,
-                             line_width=0, row=row, col=1,
-                             annotation_text=STAGE_LABELS[stage] if row == 1 else None,
-                             annotation_position="top left", annotation_font_size=10)
+                             line_width=0, row=row, col=1, **label)
     figure.update_layout(height=700, hovermode="x unified", margin=dict(t=60, b=30),
                          legend=dict(orientation="h", y=1.06, x=0))
     figure.update_yaxes(title_text="mm", row=1, col=1)
