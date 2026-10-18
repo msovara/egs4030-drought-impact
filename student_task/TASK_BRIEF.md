@@ -98,21 +98,32 @@ repository includes an `environment.yml` file, which builds a new conda environm
 called `impact` with every package from conda-forge. The ERA5 data the model
 needs are already in the repository, so you do not need a Copernicus account to download and access them.
 
-Create the environment once, from the repository root:
+Create the environment once, from the repository root. `stefaantask` is the class branch. `main` is an earlier model and does not contain this practical.
 
 ```bash
 git clone https://github.com/msovara/egs4030-drought-impact.git
 cd egs4030-drought-impact
+git checkout stefaantask
 conda env create -f environment.yml
-```
-
-If `environment.yml` is not in that folder, the clone is on the old branch. Run `git checkout stefaantask` and try again.
-
-Then, at the start of each session:
-
-```bash
 conda activate impact
 python scripts/check_install.py
+streamlit run app.py
+```
+
+The dashboard opens at <http://localhost:8501>.
+
+At the start of each later session:
+
+```bash
+cd egs4030-drought-impact
+conda activate impact
+```
+
+If the shell says `conda: command not found`:
+
+```bash
+source ~/miniforge3/etc/profile.d/conda.sh
+conda activate impact
 ```
 
 The check takes a few seconds and ends with a line saying whether your machine
@@ -145,15 +156,17 @@ For a quick text summary, `python scripts/run_demo.py --help` lists some
 command-line views.
 
 If conda will not build, install with pip instead and carry on. From the
-repository root, with a virtual environment activated:
+repository root, after `git checkout stefaantask`:
 
 ```bash
+python -m venv .venv
+source .venv/bin/activate
 python -m pip install -r requirements.txt
 python scripts/check_install.py
 python -m streamlit run app.py
 ```
 
-That is enough for the dashboard and the figure templates.
+On Windows, activate with `.venv\Scripts\activate` instead of `source .venv/bin/activate`. That is enough for the dashboard and the figure templates. Later sessions start with `source .venv/bin/activate` from the repository root.
 
 ---
 
