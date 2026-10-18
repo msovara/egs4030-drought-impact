@@ -65,6 +65,10 @@ def warn(message: str) -> None:
     print(f"  WARN  {message}")
 
 
+def info(message: str) -> None:
+    print(f"  info  {message}")
+
+
 def version_of(module, distribution: str) -> str:
     version = getattr(module, "__version__", None)
     if version:
@@ -290,7 +294,7 @@ section("Uncertainty cascade")
 try:
     forecast = forecast_djf_range()
     if forecast is None:
-        info("C3S_FORECAST in impact_model/climate.py to be filled in in `impact_model/climate.py`; "
+        info("C3S_FORECAST in impact_model/climate.py is empty; "
              "checking with a placeholder range of 1.0 to 2.0 degC")
         test_range = (1.0, 2.0)
     else:

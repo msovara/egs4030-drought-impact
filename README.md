@@ -31,7 +31,10 @@ Clone the repository and work from its root. The ERA5 files are already in
 ```bash
 git clone https://github.com/msovara/egs4030-drought-impact.git
 cd egs4030-drought-impact
+git checkout stefaantask
 ```
+
+`stefaantask` is the class branch. `main` is the earlier demonstration and will not run this practical.
 
 ### Dashboard on any laptop
 
