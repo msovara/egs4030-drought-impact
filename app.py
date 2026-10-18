@@ -208,6 +208,7 @@ st.sidebar.caption(
     f"Weather: ERA5, {summary['daily_start']:%b %Y} to {summary['daily_end']:%b %Y}. "
     f"Sea surface temperature: ERA5, to {summary['sst_end']:%b %Y}."
 )
+st.sidebar.link_button("C3S relative Niño 3.4 plume", C3S_FORECAST["url"])
 
 history = cached_history(soil_key, planting)
 
@@ -216,6 +217,7 @@ st.caption(
     "A small crop water-balance model driven by ERA5 weather, used to explore how "
     "El Niño affects dryland maize in Limpopo, and how uncertain that effect is."
 )
+st.link_button("C3S relative Niño 3.4 plume", C3S_FORECAST["url"])
 
 tab_season, tab_timing, tab_record, tab_ahead, tab_model = st.tabs([
     "1. One season",
